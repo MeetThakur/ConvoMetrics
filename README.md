@@ -49,4 +49,5 @@ By following these steps, you can easily analyze your Telegram chat and obtain t
 
 <h4>Download Links</h4>
 if you are unable download using Gthub:-
-https://drive.google.com/drive/u/2/folders/1CW7gXTcLh7ICnK9N6K9drPnkpU55NZh6
+<a href='https://drive.google.com/drive/u/2/folders/1CW7gXTcLh7ICnK9N6K9drPnkpU55NZh6'>Click Here</a>
+
