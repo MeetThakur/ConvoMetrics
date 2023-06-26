@@ -1,3 +1,4 @@
+#Telegram Chat Analyzer
 I have developed a comprehensive Python script that enables in-depth analysis of your Telegram chat with someone. With this script, you can gain valuable insights into your conversations and uncover fascinating patterns and trends. Let's explore the range of features it offers:
 
 1. Message Analysis:
@@ -25,3 +26,22 @@ I have developed a comprehensive Python script that enables in-depth analysis of
    - Determine the days with the highest message activity, providing insights into the most engaging conversations.
 
 These extensive analysis features allow you to gain a comprehensive understanding of your Telegram chat dynamics. You can track messaging patterns, identify the most active participant, uncover popular topics through word analysis, and even observe the ebb and flow of conversations based on hourly and weekly trends. The script empowers you to derive meaningful insights, enhance communication, and gain a deeper understanding of your chat history with ease and precision.
+
+
+#How To Use it?
+
+1. Download the Python script or the executable (exe) file.
+2. Make sure you have Python installed on your system. If you prefer not to install Python, you can use the exe file instead (created using the onefile module).
+3. Open Telegram Desktop and export your chat in JSON format.
+4. Rename the exported chat file as "chat.json".
+5. Place the JSON file in the same folder as the script or executable.
+6. Run the script or executable.
+7. Wait for the analysis to complete.
+8. Once the analysis is finished, you will receive your chat statistics.
+
+By following these steps, you can easily analyze your Telegram chat and obtain the desired statistics.
+
+
+#Download Links
+if you are unable download using Gthub:-
+https://drive.google.com/drive/u/2/folders/1CW7gXTcLh7ICnK9N6K9drPnkpU55NZh6
