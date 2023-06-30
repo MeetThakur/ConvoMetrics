@@ -53,47 +53,48 @@ day_dict = {"Monday":{},'Tuesday':{},'Wednesday':{},'Thursday':{},'Friday':{},'S
 for i in data['messages']:
 
     #populating Various Dictionarises
-    if i['from'] not in participants:
-        participants[i['from']] = 0
-        char_count_dict[i['from']] = 0
-        word_count_dict[i['from']] = 0
-        person_word_Dict[i['from']] = {}
-    participants[i['from']] += 1
+    if i['type'] == 'message':
+        if i['from'] not in participants:
+            participants[i['from']] = 0
+            char_count_dict[i['from']] = 0
+            word_count_dict[i['from']] = 0
+            person_word_Dict[i['from']] = {}
+        participants[i['from']] += 1
 
 
 
 
-    if i['date'][0:10] not in total_date_dict:
-        total_date_dict[i['date'][0:10]] = 0
-        date_dict[i['date'][0:10]] = {}
+        if i['date'][0:10] not in total_date_dict:
+            total_date_dict[i['date'][0:10]] = 0
+            date_dict[i['date'][0:10]] = {}
 
-    if i['from'] not in date_dict[i['date'][0:10]]:
-        date_dict[i['date'][0:10]][i['from']] = 0
+        if i['from'] not in date_dict[i['date'][0:10]]:
+            date_dict[i['date'][0:10]][i['from']] = 0
 
-    total_date_dict[i['date'][0:10]] += 1
-    date_dict[i['date'][0:10]][i['from']] +=1
-
-
-
-
-
-    if i['date'][11:13] not in total_time_dict:
-        total_time_dict[i['date'][11:13]] = 0
-        time_dict[i['date'][11:13]] = {}
-
-    if i['from'] not in time_dict[i['date'][11:13]]:
-        time_dict[i['date'][11:13]][i['from']] = 0
-
-    total_time_dict[i['date'][11:13]] +=1
-    time_dict[i['date'][11:13]][i['from']] += 1
+        total_date_dict[i['date'][0:10]] += 1
+        date_dict[i['date'][0:10]][i['from']] +=1
 
 
 
 
-    if i['from'] not in day_dict[date_to_day(i['date'][0:10])]:
-        day_dict[date_to_day(i['date'][0:10])][i['from']] = 0
 
-    day_dict[date_to_day(i['date'][0:10])][i['from']] +=1
+        if i['date'][11:13] not in total_time_dict:
+            total_time_dict[i['date'][11:13]] = 0
+            time_dict[i['date'][11:13]] = {}
+
+        if i['from'] not in time_dict[i['date'][11:13]]:
+            time_dict[i['date'][11:13]][i['from']] = 0
+
+        total_time_dict[i['date'][11:13]] +=1
+        time_dict[i['date'][11:13]][i['from']] += 1
+
+
+
+
+        if i['from'] not in day_dict[date_to_day(i['date'][0:10])]:
+            day_dict[date_to_day(i['date'][0:10])][i['from']] = 0
+
+        day_dict[date_to_day(i['date'][0:10])][i['from']] +=1
 
 
 
@@ -106,23 +107,23 @@ for i in data['messages']:
     
         
     #Most Used Words
-    if type(i['text']) != list:
-        for j in i['text'].lower().split():
-            if j.lower() not in words_dict and len(j)>min_word_lenght:
-                words_dict[j.lower()] = 0
+        if type(i['text']) != list:
+            for j in i['text'].lower().split():
+                if j.lower() not in words_dict and len(j)>min_word_lenght:
+                    words_dict[j.lower()] = 0
 
-            if j.lower() not in person_word_Dict[i['from']] and len(j)>min_word_lenght:
-                person_word_Dict[i['from']][j.lower()] = 0
+                if j.lower() not in person_word_Dict[i['from']] and len(j)>min_word_lenght:
+                    person_word_Dict[i['from']][j.lower()] = 0
 
-            if len(j.lower())> min_word_lenght:
-                words_dict[j.lower()] += 1
-                person_word_Dict[i['from']][j.lower()] += 1
+                if len(j.lower())> min_word_lenght:
+                    words_dict[j.lower()] += 1
+                    person_word_Dict[i['from']][j.lower()] += 1
 
 
 
         #averages
-        char_count_dict[i['from']] += len(i['text'].replace(" ", ""))
-        word_count_dict[i['from']] += len(i['text'].split())
+            char_count_dict[i['from']] += len(i['text'].replace(" ", ""))
+            word_count_dict[i['from']] += len(i['text'].split())
 
 
 #sorting dictionaries
@@ -271,7 +272,10 @@ for i in day_dict:
     print()
 
 
+
 print('-'*100,'\n ')
 print('Made With ❤ By VoiD')
 input('Enter any Key To Exit')
 exit()
+
+
