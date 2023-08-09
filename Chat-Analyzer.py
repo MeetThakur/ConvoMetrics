@@ -8,9 +8,16 @@ def date_to_day(date):
    x = calendar.day_name[date_object.weekday()]
    return x
 
-
-with open('chat.json','r', encoding="utf8") as f:
-  data = json.load(f)
+while True:
+    try:
+        with open('chat.json','r', encoding="utf8") as f:
+            data = json.load(f)
+        break
+    except:
+        print('Please Place the File in same Folder')
+        print("0: Exit\n1: Try Again")
+        if input() == '0':
+            exit()
 
 
 participants = {} #to count messages per peroson
@@ -207,6 +214,15 @@ for i in participants:
     print(i,':',participants[i])
 print()
 
+print('-:Total Words:-')
+for i in word_count_dict:
+   print(i,":",word_count_dict[i])
+print()
+
+print('-:Total Characters:-')
+for i in word_count_dict:
+   print(i,":",char_count_dict[i])
+print('-'*100)
 
 
 print('-: Averages :-')
