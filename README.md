@@ -34,13 +34,14 @@ These extensive analysis features allow you to gain a comprehensive understandin
 
 
 <h3>How To Use it?</h3>
-If you like to use it on cloud 
+
+If you like to use it on cloud with graphs
 1. Go - <a href='https://drive.google.com/drive/u/2/folders/1CW7gXTcLh7ICnK9N6K9drPnkpU55NZh6'>Here</a>
 2. Open Telegram Desktop and export your chat in JSON format.
 3. Upload your json file and view yours stats with awesome graphs too
 
 
-If You want to use it offline on your Machine
+If You want to use it offline on your Machine without graphs
 1. Download the Python script or the executable (exe) file.
 2. Make sure you have Python installed on your system. If you prefer not to install Python, you can use the exe file instead (created using the onefile module).
 3. Open Telegram Desktop and export your chat in JSON format.
