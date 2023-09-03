@@ -30,6 +30,7 @@ These extensive analysis features allow you to gain a comprehensive understandin
 
 <h1>If you Use the web version you'll get stats in form of graphs too</h1>
 like this
+
 ![image](https://github.com/VoidyCodes/ConvoMetrics/assets/99238677/9e74f3ef-39cd-43bf-8010-660a69f47f64)
 
 
