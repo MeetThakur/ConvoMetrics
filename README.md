@@ -28,6 +28,9 @@ I have developed a comprehensive Python script that enables in-depth analysis of
 
 These extensive analysis features allow you to gain a comprehensive understanding of your Telegram chat dynamics. You can track messaging patterns, identify the most active participant, uncover popular topics through word analysis, and even observe the ebb and flow of conversations based on hourly and weekly trends. The script empowers you to derive meaningful insights, enhance communication, and gain a deeper understanding of your chat history with ease and precision.
 
+<h1>If you Use the web version you'll get stats in form of graphs too</h1>
+like this
+![image](https://github.com/VoidyCodes/ConvoMetrics/assets/99238677/9e74f3ef-39cd-43bf-8010-660a69f47f64)
 
 
 
