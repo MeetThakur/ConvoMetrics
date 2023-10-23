@@ -31,7 +31,7 @@ These extensive analysis features allow you to gain a comprehensive understandin
 <h1>If you Use the web version you'll get stats in form of graphs too</h1>
 like this
 
-![image](https://github.com/VoidyCodes/ConvoMetrics/assets/99238677/9e74f3ef-39cd-43bf-8010-660a69f47f64)
+![image](https://github.com/MeetThakur/ConvoMetrics/assets/99238677/9e74f3ef-39cd-43bf-8010-660a69f47f64)
 
 
 
@@ -40,7 +40,7 @@ like this
 <h3>How To Use it?</h3>
 
 If you like to use it on cloud with graphs
-1. Go - <a href='https://drive.google.com/drive/u/2/folders/1CW7gXTcLh7ICnK9N6K9drPnkpU55NZh6'>Here</a>
+1. Go - <a href='https://convometrics.streamlit.app/'>Here</a>
 2. Open Telegram Desktop and export your chat in JSON format.
 3. Upload your json file and view yours stats with awesome graphs too
 
