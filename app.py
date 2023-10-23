@@ -132,12 +132,12 @@ if data is not None:
 
 
 
-    st.header(f'''General Stats
-   Total Messages - {totalmsgs}
-   Total Words - {sum(word_count_dict.values())}
-   Total Characters - {sum(char_count_dict.values())}
-   Total Days Talked - {mostdays}
-   Total Participants - {len(participants)}'''   
+    st.header(f'''General Stats\n
+   Total Messages - {totalmsgs}\n
+   Total Words - {sum(word_count_dict.values())}\n
+   Total Characters - {sum(char_count_dict.values())}\n
+   Total Days Talked - {mostdays}\n
+   Total Participants - {len(participants)}''' 
           )
 
     col1, col2 , col3 = st.columns(3)
@@ -180,9 +180,9 @@ if data is not None:
         st.bar_chart(cdm)
 
     st.subheader(f'''Averages Per Day
-   Messages - {str(totalmsgs/mostdays).split('.')[0]}
-   Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}
-   Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}
+   Messages - {str(totalmsgs/mostdays).split('.')[0]}\n
+   Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}\n
+   Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}\n
              ''')
 
 
