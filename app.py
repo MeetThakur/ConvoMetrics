@@ -15,7 +15,7 @@ data = st.file_uploader('Upload Your CHat File',type='json')
 hel = '''To Get Your Chat File:-\n
 Open Telegram on your PC -> 
 Go To Your Chat ->
-Click on Three Dots on To Right ->
+Click on Three Dots on To Right->
 Click on export Chat and Export Chat in json format
 '''
 
