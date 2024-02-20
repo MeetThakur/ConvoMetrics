@@ -13,13 +13,16 @@ st.title('Decode Your Chats: Telegram Insights at Your Fingertips!')
 data = st.file_uploader('Upload Your CHat File',type='json')
 
 hel = '''To Get Your Chat File:-\n
-Open Telegram on your PC -> 
-Go To Your Chat ->
-Click on Three Dots on To Right->
-Click on export Chat and Export Chat in json format
+    1 - Open Telegram on your PC
+    2 - Go To Your Chat
+    3 - Click on Three Dots on To Right
+    4 - Click on export Chat and Export Chat in json format
 '''
 
-x = st.write(hel)
+
+
+
+x = st.write(hel) 
 if data is not None:
     data = json.load(data)
 
@@ -28,7 +31,7 @@ if data is not None:
     words_dict = {} #count of word used per person
     totalmsgs = len(data['messages'])
 
-    min_word_lenght = 3 #minmum lenght for most used mostUsedWords
+    min_word_lenght = 4 #minmum lenght for most used mostUsedWords
 
     #total count of per persons
     char_count_dict = {}
@@ -132,12 +135,12 @@ if data is not None:
 
 
 
-    st.header(f'''General Stats\n
-   Total Messages - {totalmsgs}\n
-   Total Words - {sum(word_count_dict.values())}\n
-   Total Characters - {sum(char_count_dict.values())}\n
-   Total Days Talked - {mostdays}\n
-   Total Participants - {len(participants)}''' 
+    st.header(f'''General Stats
+        Total Messages - {totalmsgs}
+    Total Words - {sum(word_count_dict.values())}
+    Total Characters - {sum(char_count_dict.values())}
+    Total Days Talked - {mostdays}
+    Total Participants - {len(participants)}'''   
           )
 
     col1, col2 , col3 = st.columns(3)
@@ -156,8 +159,8 @@ if data is not None:
 
     st.header('Averages')
     st.subheader(f'''Averages Per Messages
-   Words - {str(sum((word_count_dict.values()))/totalmsgs)[0:4]}
-   Characters -  {str(sum((char_count_dict.values()))/totalmsgs)[0:5]}''')
+        Words - {str(sum((word_count_dict.values()))/totalmsgs)[0:4]}
+    Characters -  {str(sum((char_count_dict.values()))/totalmsgs)[0:5]}''')
 
 
 
@@ -180,9 +183,9 @@ if data is not None:
         st.bar_chart(cdm)
 
     st.subheader(f'''Averages Per Day
-   Messages - {str(totalmsgs/mostdays).split('.')[0]}\n
-   Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}\n
-   Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}\n
+        Messages - {str(totalmsgs/mostdays).split('.')[0]}
+    Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}
+    Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}
              ''')
 
 
@@ -201,7 +204,7 @@ if data is not None:
 
     with col2:
         st.subheader('Words')
-        st.bar_chart(wdm)
+        st.bar_chart(wdm)   
 
     cdmm = {}
     for i in char_count_dict:
