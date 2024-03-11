@@ -47,7 +47,7 @@ If you like to use it on cloud with graphs
 
 If You want to use it offline on your Machine without graphs
 1. Download the Python script or the executable (exe) file.
-2. Make sure you have Python installed on your system. If you prefer not to install Python, you can use the exe file instead (created using the onefile module).
+2. Make sure you have Python installed on your system.
 3. Open Telegram Desktop and export your chat in JSON format.
 4. Rename the exported chat file as "chat.json".
 5. Place the JSON file in the same folder as the script or executable.
