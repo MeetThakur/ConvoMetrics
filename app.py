@@ -12,11 +12,11 @@ def date_to_day(date):
 st.title('Decode Your Chats: Telegram Insights at Your Fingertips!')
 data = st.file_uploader('Upload Your CHat File',type='json')
 
-hel = '''To Get Your Chat File:-\n
-    1 - Open Telegram on your PC
-    2 - Go To Your Chat
-    3 - Click on Three Dots on To Right
-    4 - Click on export Chat and Export Chat in json format
+hel = '''Steps to get your chat file:-\n
+    1 - Open Telegram app on your PC
+    2 - Go to your preferred chat
+    3 - Click on three dots on top right corner
+    4 - Click on export chat and export it in json format
 '''
 
 
