@@ -50,8 +50,8 @@ If You want to use it offline on your Machine without graphs
 2. Make sure you have Python installed on your system.
 3. Open Telegram Desktop and export your chat in JSON format.
 4. Rename the exported chat file as "chat.json".
-5. Place the JSON file in the same folder as the script or executable.
-6. Run the script or executable.
+5. Place the JSON file in the same folder as the script.
+6. Run the script.
 7. Wait for the analysis to complete.
 8. Once the analysis is finished, you will receive your chat statistics.
 
