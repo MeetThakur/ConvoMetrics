@@ -1,82 +1,348 @@
-import streamlit as st
 import json
-from datetime import datetime,date
 import calendar
-import time
+from datetime import datetime,date
+
 
 def date_to_day(date):
    date_object = datetime.strptime(date, '%Y-%m-%d').date()
    x = calendar.day_name[date_object.weekday()]
    return x
 
-st.title('Decode Your Chats: Telegram Insights at Your Fingertips!')
-data = st.file_uploader('Upload Your CHat File',type='json')
-
-hel = '''Steps to get your chat file:-\n
-    1 - Open Telegram app on your PC
-    2 - Go to your preferred chat
-    3 - Click on three dots on top right corner
-    4 - Click on export chat and export it in json format
-'''
-
-
-
-
-x = st.write(hel) 
-if data is not None:
-    data = json.load(data)
+while True:
+    try:
+        with open('chat.json','r', encoding="utf8") as f:
+            data = json.load(f)
+        break
+    except:
+        print('Please Place the File in same Folder')
+        print("0: Exit\n1: Try Again")
+        if input() == '0':
+            exit()
 
 
-    participants = {} #to count messages per peroson
-    words_dict = {} #count of word used per person
-    totalmsgs = len(data['messages'])
-
-    min_word_lenght = 4 #minmum lenght for most used mostUsedWords
-
-    #total count of per persons
-    char_count_dict = {}
-    word_count_dict = {}
-
-    #word count per person per word
-    person_word_Dict = {}
-    mostUsedWords = {}
-
-    #count of hour,date per person
-    date_dict = {}
-    time_dict = {}
-
-    #count of day per person
-    day_dict = {}
+participants = {} #to count messages per peroson
+words_dict = {} #count of word used per person
+totalmsgs = len(data['messages'])
 
 
+num = 0
+min_word_lenght = 3 #minmum lenght for most used words
 
-    #main loop
+
+#total count of per persons
+char_count_dict = {}
+word_count_dict = {}
+
+
+#word count per person per word
+person_word_Dict = {}
+person_word_list = []
+
+
+#total count of messages per hour,date
+total_date_dict = {}
+total_time_dict = {}
+
+
+#count of hour,date per person
+date_dict = {}
+time_dict = {}
+
+
+#count of day per person
+day_dict = {"Monday":{},'Tuesday':{},'Wednesday':{},'Thursday':{},'Friday':{},'Saturday':{},'Sunday':{}}
+
+
+
+
+
+#main loop
+for i in data['messages']:
+
+    #populating Various Dictionarises
+    if i['type'] == 'message':
+        if i['from'] not in participants:
+            participants[i['from']] = 0
+            char_count_dict[i['from']] = 0
+            word_count_dict[i['from']] = 0
+            person_word_Dict[i['from']] = {}
+        participants[i['from']] += 1
+
+
+
+
+        if i['date'][0:10] not in total_date_dict:
+            total_date_dict[i['date'][0:10]] = 0
+            date_dict[i['date'][0:10]] = {}
+
+        if i['from'] not in date_dict[i['date'][0:10]]:
+            date_dict[i['date'][0:10]][i['from']] = 0
+
+        total_date_dict[i['date'][0:10]] += 1
+        date_dict[i['date'][0:10]][i['from']] +=1
+
+
+
+
+
+        if i['date'][11:13] not in total_time_dict:
+            total_time_dict[i['date'][11:13]] = 0
+            time_dict[i['date'][11:13]] = {}
+
+        if i['from'] not in time_dict[i['date'][11:13]]:
+            time_dict[i['date'][11:13]][i['from']] = 0
+
+        total_time_dict[i['date'][11:13]] +=1
+        time_dict[i['date'][11:13]][i['from']] += 1
+
+
+
+
+        if i['from'] not in day_dict[date_to_day(i['date'][0:10])]:
+            day_dict[date_to_day(i['date'][0:10])][i['from']] = 0
+
+        day_dict[date_to_day(i['date'][0:10])][i['from']] +=1
+
+
+
+
+    
+
+
+
+
+    
+        
+    #Most Used Words
+        if type(i['text']) != list:
+            for j in i['text'].lower().split():
+                if j.lower() not in words_dict and len(j)>min_word_lenght:
+                    words_dict[j.lower()] = 0
+
+                if j.lower() not in person_word_Dict[i['from']] and len(j)>min_word_lenght:
+                    person_word_Dict[i['from']][j.lower()] = 1
+
+                if len(j.lower())> min_word_lenght:
+                    words_dict[j.lower()] += 1
+                    person_word_Dict[i['from']][j.lower()] += 1
+
+
+
+        #averages
+            char_count_dict[i['from']] += len(i['text'].replace(" ", ""))
+            word_count_dict[i['from']] += len(i['text'].split())
+
+
+
+#sorting dictionaries
+mostusedwords = sorted(words_dict.items(), key=lambda x:x[1] ,reverse = True)
+mostusedwords = mostusedwords[0:11]
+
+total_date_dict = sorted(total_date_dict.items(), key = lambda x:x[1],reverse=True)
+
+for i in participants:
+    dict1 = sorted(person_word_Dict[i].items(),key=lambda x:x[1] , reverse = True)
+    dict1 = dict1[0:10]
+    person_word_list.append([i,dict1])
+
+
+
+
+
+#Output of Stats
+print("----:TELEGRAM CHAT STATS:----")
+print('Total Messages : ',totalmsgs,
+    '\nTotal Words : ', sum(word_count_dict.values()),
+    '\nTotal Characters : ' , sum(char_count_dict.values()),
+    '\nTotal Days Talked : ',len(total_date_dict),
+    '\n  ')
+print('-'*100,'\n ')
+
+
+
+
+
+print("-: Most Used Words :-")
+for i in mostusedwords[0:10]:
+    print(i[0], '-' ,i[1])
+print()
+print('-'*100,'\n ')
+
+
+
+
+
+print('--: Averages :--')
+print("-: Average Message Length :-")
+print(str(sum((char_count_dict.values()))/totalmsgs)[0:4],'Characters')
+print(str(sum((word_count_dict.values()))/totalmsgs)[0:4],'Words')
+print()
+
+
+print("-: Averages Per Day :-")
+print(str(totalmsgs/len(total_date_dict)),'Messages')
+print(str(sum(word_count_dict.values())/len(total_date_dict)),'Words')
+print(str(sum(char_count_dict.values())/len(total_date_dict)),'Characters')
+print('-'*100,'\n')
+
+
+
+
+
+
+
+print('-: Most Active Dates :-')
+for i in total_date_dict:
+    print(i[0],':',i[1],'messages')
+    for k in date_dict[i[0]]:
+        print(k,':',date_dict[i[0]][k])
+    print()
+
+    num +=1 
+    if num == 5:
+        break
+print()
+print('-'*100,'\n')
+
+
+
+
+
+
+print('--: Per Person Stats :--')
+print()
+print('-:Total Messages:-')
+for i in participants:
+    print(i,':',participants[i])
+print()
+
+print('-:Total Words:-')
+for i in word_count_dict:
+   print(i,":",word_count_dict[i])
+print()
+
+print('-:Total Characters:-')
+for i in word_count_dict:
+   print(i,":",char_count_dict[i])
+print('-'*100)
+
+
+
+print('-: Averages :-')
+print('Average Words Per Message')
+for i in word_count_dict:
+    print(i,':',str((word_count_dict[i]/participants[i]))[0:4])
+
+print()
+print('Average Characters Per Message')
+for i in char_count_dict:
+    print(i,':',str((char_count_dict[i]/participants[i]))[0:4])
+
+
+print()
+print("-: Averages Per Day :-")
+print("Messages")
+for i in participants:
+    print(i,':',participants[i]//len(total_date_dict))
+print()
+print("Words")
+for i in word_count_dict:
+    print(i,':',str((word_count_dict[i]//len(total_date_dict))))
+print()
+print('Characters')
+for i in char_count_dict:
+    print(i,':',str((char_count_dict[i]//len(total_date_dict))))
+    
+
+
+
+
+print()
+print('- : Most Used Words : -')
+for i in person_word_list:
+    print('- ',i[0],' -')
+    for j in i[1]:
+        print(j[0], ':',j[1])
+    print()
+
+
+
+
+
+
+
+
+print('-'*100,'\n ')
+print('-: Hourly Messages Stats :-')
+total_time_dict =  sorted(total_time_dict.items())
+for i in total_time_dict:
+    print(i[0],':',i[1])
+    for j in time_dict[i[0]]:
+        print(j,time_dict[i[0]][j])
+    print()
+
+
+
+
+
+
+print('-'*100,'\n ')
+print('-: Weekly Messages Stats :-')
+for i in day_dict:
+    print(i,'-',sum(day_dict[i].values()))
+    for j in day_dict[i]:
+        print(j,':',day_dict[i][j])
+    print()
+
+print(char_count_dict)
+
+print('-'*100,'\n ')
+print('Made With ❤ By VoiD')
+input('Enter any Key To Exit')
+exit()
+
+
+def getData():
+    global participants,words_dict,min_word_lenght,char_count_dict,word_count_dict,person_word_Dict,person_word_list,total_date_dict,total_time_dict,time_dict,date_dict,day_dict
     for i in data['messages']:
-
+    #populating Various Dictionarises
         if i['type'] == 'message':
             if i['from'] not in participants:
-                mostUsedWords[i['from']] = {}
                 participants[i['from']] = 0
                 char_count_dict[i['from']] = 0
                 word_count_dict[i['from']] = 0
                 person_word_Dict[i['from']] = {}
-                day_dict[i['from']] = {"Monday":0,'Tuesday':0,'Wednesday':0,'Thursday':0,'Friday':0,'Saturday':0,'Sunday':0}
-                time_dict[i['from']] = {}
-                date_dict[i['from']] = {}
-
-
-            if i['date'][0:10] not in date_dict[i['from']]:
-                date_dict[i['from']][i['date'][0:10]] = 0
-
-            if i['date'][11:13] not in time_dict[i['from']]:
-                time_dict[i['from']][i['date'][11:13]] = 0
-
             participants[i['from']] += 1
-            date_dict[i['from']][i['date'][0:10]] +=1
-            time_dict[i['from']][i['date'][11:13]] += 1
-            day_dict[i['from']][date_to_day(i['date'][0:10])] +=1
+
+            if i['date'][0:10] not in total_date_dict:
+                total_date_dict[i['date'][0:10]] = 0
+                date_dict[i['date'][0:10]] = {}
+
+            if i['from'] not in date_dict[i['date'][0:10]]:
+                date_dict[i['date'][0:10]][i['from']] = 0
+
+            total_date_dict[i['date'][0:10]] += 1
+            date_dict[i['date'][0:10]][i['from']] +=1
 
 
+            if i['date'][11:13] not in total_time_dict:
+                total_time_dict[i['date'][11:13]] = 0
+                time_dict[i['date'][11:13]] = {}
+
+            if i['from'] not in time_dict[i['date'][11:13]]:
+                time_dict[i['date'][11:13]][i['from']] = 0
+
+            total_time_dict[i['date'][11:13]] +=1
+            time_dict[i['date'][11:13]][i['from']] += 1
+
+
+            if i['from'] not in day_dict[date_to_day(i['date'][0:10])]:
+                day_dict[date_to_day(i['date'][0:10])][i['from']] = 0
+
+            day_dict[date_to_day(i['date'][0:10])][i['from']] +=1
+
+  
+    #Most Used Words
             if type(i['text']) != list:
                 for j in i['text'].lower().split():
                     if j.lower() not in words_dict and len(j)>min_word_lenght:
@@ -91,146 +357,19 @@ if data is not None:
 
 
 
-            #averages
+        #averages
                 char_count_dict[i['from']] += len(i['text'].replace(" ", ""))
                 word_count_dict[i['from']] += len(i['text'].split())
 
 
-    #sorting dictionaries
-    words_dict = sorted(words_dict.items(), key=lambda x:x[1] ,reverse = True)
-    words_dict = dict(words_dict[0:11])
 
+#sorting dictionaries
+        mostusedwords = sorted(words_dict.items(), key=lambda x:x[1] ,reverse = True)
+        mostusedwords = mostusedwords[0:11]
 
-    mostdays = 0
-    for i in date_dict:
-        if len(date_dict[i]) > mostdays:
-            mostdays = len(date_dict[i])
+        total_date_dict = sorted(total_date_dict.items(), key = lambda x:x[1],reverse=True)
 
     for i in participants:
-        temp = sorted(person_word_Dict[i].items(),key=lambda x:x[1] , reverse = True)
-        temp = dict(temp)
-        person_word_Dict[i] = temp
-
-
-    person_day_dict = {}
-    for i in day_dict:
-        person_day_dict[i] = sum(day_dict[i].values())
-
-
-
-    for i in words_dict:
-        for j in mostUsedWords:
-            mostUsedWords[j][i] = 0
-            if i in person_word_Dict[j]:
-                mostUsedWords[j][i] += person_word_Dict[j][i]
-
-
-
-
-
-
-
-
-
-
-
-
-    st.header(f'''General Stats
-        Total Messages - {totalmsgs}
-    Total Words - {sum(word_count_dict.values())}
-    Total Characters - {sum(char_count_dict.values())}
-    Total Days Talked - {mostdays}
-    Total Participants - {len(participants)}'''   
-          )
-
-    col1, col2 , col3 = st.columns(3)
-
-    with col1:
-        st.subheader('Total Messages')
-        st.bar_chart(participants)
-    with col2:
-        st.subheader('Total words')
-        st.bar_chart(word_count_dict)
-
-    with col3:
-        st.subheader('Total Charaters')
-        st.bar_chart(char_count_dict)
-
-
-    st.header('Averages')
-    st.subheader(f'''Averages Per Messages
-        Words - {str(sum((word_count_dict.values()))/totalmsgs)[0:4]}
-    Characters -  {str(sum((char_count_dict.values()))/totalmsgs)[0:5]}''')
-
-
-
-    adm = {}
-    for i in word_count_dict:
-        adm[i]= (word_count_dict[i]/participants[i])
-
-    cdm= {}
-    for i in char_count_dict:
-        cdm[i]= (char_count_dict[i]/participants[i])
-
-
-    col1 , col2 = st.columns(2)
-    with col1:
-        st.subheader('Words')
-        st.bar_chart(adm)
-
-    with col2:
-        st.subheader('Characters')
-        st.bar_chart(cdm)
-
-    st.subheader(f'''Averages Per Day
-        Messages - {str(totalmsgs/mostdays).split('.')[0]}
-    Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}
-    Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}
-             ''')
-
-
-    col1,col2,col3 = st.columns(3)
-
-    mdm = {}
-    for i in participants:
-        mdm[i] = participants[i]/mostdays
-    with col1:
-        st.subheader('Messages')
-        st.bar_chart(mdm)
-
-    wdm = {}
-    for i in word_count_dict:
-        wdm[i] = word_count_dict[i]/mostdays
-
-    with col2:
-        st.subheader('Words')
-        st.bar_chart(wdm)   
-
-    cdmm = {}
-    for i in char_count_dict:
-        cdmm[i] = char_count_dict[i]/mostdays
-
-    with col3:
-        st.subheader('Characters')
-        st.bar_chart(cdmm)
-
-
-
-
-    st.header('Most Used Words')
-    st.bar_chart(mostUsedWords)
-
-    st.header('Date-Wise Stats')
-    st.bar_chart(data=date_dict)
-
-    st.header('Weekly Stats')
-    st.bar_chart(data=day_dict)
-
-    st.header('Hourly Stats')
-    st.bar_chart(data=time_dict)
-
-
-
-
-
-
+        dict1 = sorted(person_word_Dict[i].items(),key=lambda x:x[1] , reverse = True)
+        dict1 = dict1[0:10]
+        person_word_list.append([i,dict1])
