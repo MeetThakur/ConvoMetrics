@@ -1,4 +1,5 @@
-<h1>Telegram Chat Analyzer</h1>
+<h1>Telegram Chat Analyzer and Statistics</h1>
+
 
 I have developed a comprehensive Python script that enables in-depth analysis of your Telegram chat with someone. With this script, you can gain valuable insights into your conversations and uncover fascinating patterns and trends. Let's explore the range of features it offers:
 
