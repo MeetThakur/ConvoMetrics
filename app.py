@@ -231,6 +231,6 @@ if data is not None:
 
 
 
-st.write('Made with ❤️ Meet')
-
+st.write('Made with ❤️ by Meet')
+st.write('Consider Starring The repository if you like it')
 
