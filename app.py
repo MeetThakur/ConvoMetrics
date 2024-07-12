@@ -31,7 +31,7 @@ if data is not None:
     words_dict = {} #count of word used per person
     totalmsgs = len(data['messages'])
 
-    min_word_lenght = 4 #minmum lenght for most used mostUsedWords
+    min_word_lenght = 3 #minmum lenght for most used mostUsedWords
 
     #total count of per persons
     char_count_dict = {}
