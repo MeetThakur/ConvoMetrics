@@ -4,6 +4,9 @@ from datetime import datetime,date
 import calendar
 import time
 
+st.set_page_config(
+        page_title="Convo Metrics",
+)
 def date_to_day(date):
    date_object = datetime.strptime(date, '%Y-%m-%d').date()
    x = calendar.day_name[date_object.weekday()]
@@ -124,7 +127,7 @@ if data is not None:
             if i in person_word_Dict[j]:
                 mostUsedWords[j][i] += person_word_Dict[j][i]
 
-
+    print(mostUsedWords)
 
 
 
@@ -232,5 +235,5 @@ if data is not None:
 
 
 st.write('Made with ❤️ by Meet')
-st.write('Consider Starring The repository if you like it')
+
 
