@@ -3,17 +3,17 @@ import json
 from datetime import datetime,date
 import calendar
 import time
+import emoji
 
-st.set_page_config(
-        page_title="Convo Metrics",
-)
+st.set_page_config(page_title="Convo Metrics",)
+
 def date_to_day(date):
    date_object = datetime.strptime(date, '%Y-%m-%d').date()
    x = calendar.day_name[date_object.weekday()]
    return x
 
 st.title('Decode Your Chats: Telegram Insights at Your Fingertips!')
-data = st.file_uploader('Upload Your CHat File',type='json')
+data = st.file_uploader('Upload Your Chat File',type='json')
 
 text = '''Steps to get your chat file:-\n
     1 - Open Telegram app on your PC
@@ -31,28 +31,28 @@ if data is not None:
 
 
     participants = {} #to count messages per peroson
-    words_dict = {} #count of word used per person
+    CombinedWordsCount = {} 
     totalmsgs = len(data['messages'])
 
     min_word_lenght = 3 #minmum lenght for most used mostUsedWords
 
     #total count of per persons
-    char_count_dict = {}
-    word_count_dict = {}
+    CharactersCount = {}
+    WordsCount = {}
 
     #word count per person per word
-    person_word_Dict = {}
+    wordsPerPerson = {}
     mostUsedWords = {}
 
-    #count of hour,date per person
-    date_dict = {}
-    time_dict = {}
-
-    #count of day per person
-    day_dict = {}
-
-
-
+    #count of hour,day,date per person
+    MsgPerDate = {}
+    MsgPerHour = {}
+    MsgPerDay = {}
+    
+    #count of emojis
+    combinedEmojiCount = {}
+    perPersonEmojis = {}
+    mostUsedEmojis = {}
     #main loop
     for i in data['messages']:
 
@@ -60,89 +60,100 @@ if data is not None:
             if i['from'] not in participants:
                 mostUsedWords[i['from']] = {}
                 participants[i['from']] = 0
-                char_count_dict[i['from']] = 0
-                word_count_dict[i['from']] = 0
-                person_word_Dict[i['from']] = {}
-                day_dict[i['from']] = {"Monday":0,'Tuesday':0,'Wednesday':0,'Thursday':0,'Friday':0,'Saturday':0,'Sunday':0}
-                time_dict[i['from']] = {}
-                date_dict[i['from']] = {}
+                CharactersCount[i['from']] = 0
+                WordsCount[i['from']] = 0
+                wordsPerPerson[i['from']] = {}
+                
+                MsgPerDay[i['from']] = {"Monday":0,'Tuesday':0,'Wednesday':0,'Thursday':0,'Friday':0,'Saturday':0,'Sunday':0}
+                MsgPerHour[i['from']] = {}
+                MsgPerDate[i['from']] = {}
+                mostUsedEmojis[i['from']] = {}
+                perPersonEmojis[i['from']] = {}
 
 
-            if i['date'][0:10] not in date_dict[i['from']]:
-                date_dict[i['from']][i['date'][0:10]] = 0
+            if i['date'][0:10] not in MsgPerDate[i['from']]:
+                MsgPerDate[i['from']][i['date'][0:10]] = 0
 
-            if i['date'][11:13] not in time_dict[i['from']]:
-                time_dict[i['from']][i['date'][11:13]] = 0
+            if i['date'][11:13] not in MsgPerHour[i['from']]:
+                MsgPerHour[i['from']][i['date'][11:13]] = 0
 
             participants[i['from']] += 1
-            date_dict[i['from']][i['date'][0:10]] +=1
-            time_dict[i['from']][i['date'][11:13]] += 1
-            day_dict[i['from']][date_to_day(i['date'][0:10])] +=1
+            MsgPerDate[i['from']][i['date'][0:10]] +=1
+            MsgPerHour[i['from']][i['date'][11:13]] += 1
+            MsgPerDay[i['from']][date_to_day(i['date'][0:10])] +=1
 
 
             if type(i['text']) != list:
                 for j in i['text'].lower().split():
-                    if j.lower() not in words_dict and len(j)>min_word_lenght:
-                        words_dict[j.lower()] = 0
+                    if emoji.emoji_count(j) > 0:
+                        for em in j:
+                            if emoji.is_emoji(em):
+                                if em not in combinedEmojiCount:
+                                    combinedEmojiCount[em] = 0
 
-                    if j.lower() not in person_word_Dict[i['from']] and len(j)>min_word_lenght:
-                        person_word_Dict[i['from']][j.lower()] = 1
+                                if em not in perPersonEmojis[i['from']]:
+                                    perPersonEmojis[i['from']][em] = 0
+
+                                combinedEmojiCount[em] += 1
+                                perPersonEmojis[i['from']][em] += 1
+                    
+                    if j.lower() not in CombinedWordsCount and len(j)>min_word_lenght:
+                        CombinedWordsCount[j.lower()] = 0
+                        
+
+                    if j.lower() not in wordsPerPerson[i['from']] and len(j)>min_word_lenght:
+                        wordsPerPerson[i['from']][j.lower()] = 1
 
                     if len(j.lower())> min_word_lenght:
-                        words_dict[j.lower()] += 1
-                        person_word_Dict[i['from']][j.lower()] += 1
+                        CombinedWordsCount[j.lower()] += 1
+                        wordsPerPerson[i['from']][j.lower()] += 1
+                    
+                    
 
 
-
-            #averages
-                char_count_dict[i['from']] += len(i['text'].replace(" ", ""))
-                word_count_dict[i['from']] += len(i['text'].split())
+                CharactersCount[i['from']] += len(i['text'].replace(" ", ""))
+                WordsCount[i['from']] += len(i['text'].split())
 
 
     #sorting dictionaries
-    words_dict = sorted(words_dict.items(), key=lambda x:x[1] ,reverse = True)
-    words_dict = dict(words_dict[0:11])
+    CombinedWordsCount = sorted(CombinedWordsCount.items(), key=lambda x:x[1] ,reverse = True)
+    CombinedWordsCount = dict(CombinedWordsCount[0:16])
+    combinedEmojiCount = dict(sorted(combinedEmojiCount.items(), key=lambda x:x[1], reverse=True)[0:11])
+    
 
+    totalDays = 0
+    for i in MsgPerDate:
+        if len(MsgPerDate[i]) > totalDays:
+            totalDays = len(MsgPerDate[i])
 
-    mostdays = 0
-    for i in date_dict:
-        if len(date_dict[i]) > mostdays:
-            mostdays = len(date_dict[i])
 
     for i in participants:
-        temp = sorted(person_word_Dict[i].items(),key=lambda x:x[1] , reverse = True)
+        temp = sorted(wordsPerPerson[i].items(),key=lambda x:x[1] , reverse = True)
         temp = dict(temp)
-        person_word_Dict[i] = temp
-
-
-    person_day_dict = {}
-    for i in day_dict:
-        person_day_dict[i] = sum(day_dict[i].values())
+        wordsPerPerson[i] = temp
+        del temp
 
 
 
-    for i in words_dict:
+    for i in CombinedWordsCount:
         for j in mostUsedWords:
             mostUsedWords[j][i] = 0
-            if i in person_word_Dict[j]:
-                mostUsedWords[j][i] += person_word_Dict[j][i]
+            if i in wordsPerPerson[j]:
+                mostUsedWords[j][i] += wordsPerPerson[j][i]
 
-    print(mostUsedWords)
-
-
-
-
-
-
-
+    for i in combinedEmojiCount:
+        for j in mostUsedEmojis:
+            mostUsedEmojis[j][i] = 0
+            if i in perPersonEmojis[j]:
+                mostUsedEmojis[j][i] += perPersonEmojis[j][i]
 
 
 
     st.header(f'''General Metrics
         Total Messages - {totalmsgs}
-    Total Words - {sum(word_count_dict.values())}
-    Total Characters - {sum(char_count_dict.values())}
-    Total Days Talked - {mostdays}
+    Total Words - {sum(WordsCount.values())}
+    Total Characters - {sum(CharactersCount.values())}
+    Total Days Talked - {totalDays}
     Total Participants - {len(participants)}'''   
           )
 
@@ -153,27 +164,28 @@ if data is not None:
         st.bar_chart(participants)
     with col2:
         st.subheader('Total words')
-        st.bar_chart(word_count_dict)
+        st.bar_chart(WordsCount)
 
     with col3:
         st.subheader('Total Charaters')
-        st.bar_chart(char_count_dict)
+        st.bar_chart(CharactersCount)
 
 
     st.header('Averages')
     st.subheader(f'''Averages Per Messages
-        Words - {str(sum((word_count_dict.values()))/totalmsgs)[0:4]}
-    Characters -  {str(sum((char_count_dict.values()))/totalmsgs)[0:5]}''')
+        Words - {str(sum((WordsCount.values()))/totalmsgs)[0:4]}
+    Characters -  {str(sum((CharactersCount.values()))/totalmsgs)[0:5]}''')
 
 
 
     adm = {}
-    for i in word_count_dict:
-        adm[i]= (word_count_dict[i]/participants[i])
+    for i in WordsCount:
+        adm[i]= (WordsCount[i]/participants[i])
+        
 
     cdm= {}
-    for i in char_count_dict:
-        cdm[i]= (char_count_dict[i]/participants[i])
+    for i in CharactersCount:
+        cdm[i]= (CharactersCount[i]/participants[i])
 
 
     col1 , col2 = st.columns(2)
@@ -186,32 +198,32 @@ if data is not None:
         st.bar_chart(cdm)
 
     st.subheader(f'''Daily Averages
-        Messages - {str(totalmsgs/mostdays).split('.')[0]}
-    Words - {str(sum((word_count_dict.values()))/mostdays).split('.')[0]}
-    Characters - {str(sum(char_count_dict.values())/mostdays).split('.')[0]}
-             ''')
+                Messages - {str(totalmsgs/totalDays).split('.')[0]}
+                Words - {str(sum((WordsCount.values()))/totalDays).split('.')[0]}
+                Characters - {str(sum(CharactersCount.values())/totalDays).split('.')[0]}
+                ''')
 
 
     col1,col2,col3 = st.columns(3)
 
     mdm = {}
     for i in participants:
-        mdm[i] = participants[i]/mostdays
+        mdm[i] = participants[i]/totalDays
     with col1:
         st.subheader('Messages')
         st.bar_chart(mdm)
 
     wdm = {}
-    for i in word_count_dict:
-        wdm[i] = word_count_dict[i]/mostdays
+    for i in WordsCount:
+        wdm[i] = WordsCount[i]/totalDays
 
     with col2:
         st.subheader('Words')
         st.bar_chart(wdm)   
 
     cdmm = {}
-    for i in char_count_dict:
-        cdmm[i] = char_count_dict[i]/mostdays
+    for i in CharactersCount:
+        cdmm[i] = CharactersCount[i]/totalDays
 
     with col3:
         st.subheader('Characters')
@@ -221,20 +233,23 @@ if data is not None:
 
 
     st.header('Most Used Words')
-    st.bar_chart(mostUsedWords)
+    st.bar_chart(data=mostUsedWords)
 
     st.header('Date-Wise Stats')
-    st.bar_chart(data=date_dict)
+    st.bar_chart(data=MsgPerDate)
 
     st.header('Weekly Stats')
-    st.bar_chart(data=day_dict)
+    st.bar_chart(data=MsgPerDay)
 
     st.header('Hourly Stats')
-    st.bar_chart(data=time_dict)
+    st.bar_chart(data=MsgPerHour)
+    
+    st.header('Emoji Stats')
+    st.bar_chart(data=mostUsedEmojis)
 
 
 
 st.write('Made with ❤️ by Meet')
-st.write('Consider Starring 🌟 The repository if you like it')
+st.write("If you like this app, please give a ⭐ on the Github")
 
 
