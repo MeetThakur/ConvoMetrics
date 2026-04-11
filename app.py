@@ -13,7 +13,7 @@ from nltk.corpus import stopwords
 from wordcloud import WordCloud
 
 # --- Page Configuration ---
-st.set_page_config(page_title="Convo Metrics", page_icon="💬", layout="wide")
+st.set_page_config(page_title="Convo Metrics", layout="wide")
 
 
 # --- NLTK Setup ---
@@ -137,9 +137,9 @@ def preprocess_dataframe(df):
 
 
 # --- Sidebar UI ---
-st.sidebar.title("💬 Convo Metrics")
+st.sidebar.title("Convo Metrics")
 st.sidebar.markdown(
-    "Decode your conversations with **Pandas** & **NLP** superpowers! 🚀"
+    "Decode your conversations with **Pandas** & **NLP** superpowers!"
 )
 
 file_type = st.sidebar.radio("Platform", ["Telegram (JSON)", "WhatsApp (TXT)"])
@@ -148,11 +148,11 @@ uploaded_file = st.sidebar.file_uploader(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.write("Made with ❤️ by Meet")
-st.sidebar.write("Consider Starring 🌟 the repository if you like it")
+st.sidebar.write("Made with love by Meet")
+st.sidebar.write("Consider Starring the repository if you like it")
 
 # --- Main App ---
-st.title("Chat Analytics Dashboard 📊")
+st.title("Chat Analytics Dashboard")
 st.markdown(
     "Dive deep into your chat history, track emoji usage, search for specific words, and visualize activity like never before!"
 )
@@ -244,16 +244,16 @@ if uploaded_file is not None:
             # --- Tabs ---
             tab_overview, tab_time, tab_words, tab_search, tab_emojis = st.tabs(
                 [
-                    "📊 Overview",
-                    "⏳ Activity Timeline",
-                    "☁️ Word Analysis",
-                    "🔍 Word Searcher",
-                    "😂 Emoji Usage",
+                    "Overview",
+                    "Activity Timeline",
+                    "Word Analysis",
+                    "Word Searcher",
+                    "Emoji Usage",
                 ]
             )
 
             with tab_overview:
-                st.subheader("🎁 Your Chat Wrapped")
+                st.subheader("Your Chat Wrapped")
                 book_pages = total_words // 250
                 st.info(
                     f'**It all started on {first_date}** when **{first_sender}** said: *"{first_msg}"*. '
@@ -355,7 +355,7 @@ if uploaded_file is not None:
                     st.plotly_chart(fig_hours, use_container_width=True)
 
             with tab_words:
-                st.subheader("Visual Word Cloud ☁️")
+                st.subheader("Visual Word Cloud")
                 st.markdown(
                     "A visual representation of the most frequently used words across the entire chat."
                 )
@@ -426,7 +426,7 @@ if uploaded_file is not None:
                     st.info("Not enough textual data to analyze words.")
 
             with tab_search:
-                st.subheader("🔍 'Who Said It?' Word Searcher")
+                st.subheader("'Who Said It?' Word Searcher")
                 st.markdown(
                     "Find out who uses a specific word the most, and when it was used!"
                 )
@@ -494,7 +494,7 @@ if uploaded_file is not None:
                         )
 
             with tab_emojis:
-                st.subheader("Emoji Analytics 😂❤️🔥")
+                st.subheader("Emoji Analytics")
 
                 @st.cache_data
                 def get_top_emojis(df_subset):
