@@ -214,6 +214,33 @@ if uploaded_file is not None:
             total_days = df["date"].nunique()
             participants = df["sender"].nunique()
 
+            # --- Advanced Metrics (Starters & Streaks) ---
+            df = df.sort_values("timestamp").reset_index(drop=True)
+            df["time_diff"] = df["timestamp"].diff()
+            df["is_starter"] = df["time_diff"] > pd.Timedelta(hours=8)
+            df.loc[0, "is_starter"] = True
+            starters = df[df["is_starter"]]["sender"].value_counts()
+            top_starter = starters.index[0] if not starters.empty else "Someone"
+
+            unique_dates = pd.Series(df["date"].unique()).sort_values()
+            date_diff = pd.to_datetime(unique_dates).diff().dt.days
+            streak_groups = (date_diff != 1).cumsum()
+            streak_lengths = streak_groups.value_counts()
+            max_streak = streak_lengths.max() if not streak_lengths.empty else 0
+            if max_streak > 0:
+                longest_streak_group = streak_lengths.idxmax()
+                streak_dates = unique_dates[streak_groups == longest_streak_group]
+                streak_start = streak_dates.iloc[0].strftime("%b %d, %Y")
+                streak_end = streak_dates.iloc[-1].strftime("%b %d, %Y")
+            else:
+                streak_start, streak_end = "", ""
+
+            first_date = (
+                df["date"].iloc[0].strftime("%b %d, %Y") if not df.empty else ""
+            )
+            first_msg = df["message"].iloc[0] if not df.empty else ""
+            first_sender = df["sender"].iloc[0] if not df.empty else ""
+
             # --- Tabs ---
             tab_overview, tab_time, tab_words, tab_search, tab_emojis = st.tabs(
                 [
@@ -226,6 +253,16 @@ if uploaded_file is not None:
             )
 
             with tab_overview:
+                st.subheader("🎁 Your Chat Wrapped")
+                book_pages = total_words // 250
+                st.info(
+                    f'**It all started on {first_date}** when **{first_sender}** said: *"{first_msg}"*. '
+                    f"Since then, you've shared enough words to write a **{book_pages}-page book**! "
+                    f"Your longest texting streak was **{max_streak} days** straight ({streak_start} to {streak_end}). "
+                    f"**{top_starter}** is usually the one to break the ice and start conversations after a break!"
+                )
+
+                st.markdown("---")
                 st.subheader("High-Level Statistics")
                 m1, m2, m3, m4, m5 = st.columns(5)
                 m1.metric("Total Messages", f"{total_msgs:,}")
