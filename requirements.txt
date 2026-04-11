@@ -1,0 +1,7 @@
+streamlit
+pandas
+nltk
+emoji
+plotly
+wordcloud
+matplotlib
