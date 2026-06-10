@@ -421,7 +421,7 @@ if uploaded_file is not None:
                 if not per_person_stats.empty:
                     st.dataframe(
                         per_person_stats,
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True,
                     )
 
@@ -439,7 +439,7 @@ if uploaded_file is not None:
                         hole=0.4,
                         color_discrete_sequence=px.colors.sequential.Teal,
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                 with col2:
                     st.subheader("Average Message Length")
@@ -454,7 +454,7 @@ if uploaded_file is not None:
                         color_discrete_sequence=px.colors.qualitative.Pastel,
                     )
                     fig2.update_traces(texttemplate="%{text:.1f}")
-                    st.plotly_chart(fig2, use_container_width=True)
+                    st.plotly_chart(fig2, width='stretch')
 
             with tab_time:
                 st.subheader("Activity Over Time")
@@ -467,7 +467,7 @@ if uploaded_file is not None:
                     line_shape="spline",
                 )
                 fig_time.update_traces(line_color="#FF4B4B")
-                st.plotly_chart(fig_time, use_container_width=True)
+                st.plotly_chart(fig_time, width='stretch')
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -492,7 +492,7 @@ if uploaded_file is not None:
                         color="Messages",
                         color_continuous_scale="Blues",
                     )
-                    st.plotly_chart(fig_days, use_container_width=True)
+                    st.plotly_chart(fig_days, width='stretch')
 
                 with col2:
                     st.subheader("Activity by Hour")
@@ -506,7 +506,7 @@ if uploaded_file is not None:
                         color_continuous_scale="Purples",
                     )
                     fig_hours.update_xaxes(tickmode="linear", tick0=0, dtick=1)
-                    st.plotly_chart(fig_hours, use_container_width=True)
+                    st.plotly_chart(fig_hours, width='stretch')
 
             with tab_words:
                 st.subheader("Visual Word Cloud")
@@ -564,7 +564,7 @@ if uploaded_file is not None:
                         color_continuous_scale="Viridis",
                     )
                     fig_words.update_layout(yaxis={"categoryorder": "total ascending"})
-                    st.plotly_chart(fig_words, use_container_width=True)
+                    st.plotly_chart(fig_words, width='stretch')
                 else:
                     st.info("Not enough textual data to analyze words.")
 
@@ -587,7 +587,7 @@ if uploaded_file is not None:
                         if sender_unique_words:
                             st.dataframe(
                                 pd.DataFrame(sender_unique_words),
-                                use_container_width=True,
+                                width='stretch',
                                 hide_index=True,
                             )
                         else:
@@ -599,7 +599,7 @@ if uploaded_file is not None:
                         if sender_unique_messages:
                             st.dataframe(
                                 pd.DataFrame(sender_unique_messages),
-                                use_container_width=True,
+                                width='stretch',
                                 hide_index=True,
                                 column_config={
                                     "Item": st.column_config.TextColumn(
@@ -655,13 +655,13 @@ if uploaded_file is not None:
                             color="Participant",
                             color_discrete_sequence=px.colors.qualitative.Safe,
                         )
-                        st.plotly_chart(fig_sender_links, use_container_width=True)
+                        st.plotly_chart(fig_sender_links, width='stretch')
 
                         sender_link_message_df = link_messages_per_sender.reset_index()
                         sender_link_message_df.columns = ["Participant", "Messages With Links"]
                         st.dataframe(
                             sender_link_message_df,
-                            use_container_width=True,
+                            width='stretch',
                             hide_index=True,
                         )
 
@@ -683,10 +683,10 @@ if uploaded_file is not None:
                             fig_domains.update_layout(
                                 yaxis={"categoryorder": "total ascending"}
                             )
-                            st.plotly_chart(fig_domains, use_container_width=True)
+                            st.plotly_chart(fig_domains, width='stretch')
                             st.dataframe(
                                 domain_df,
-                                use_container_width=True,
+                                width='stretch',
                                 hide_index=True,
                             )
                         else:
@@ -699,7 +699,7 @@ if uploaded_file is not None:
                     ].head(20)
                     st.dataframe(
                         recent_links_df,
-                        use_container_width=True,
+                        width='stretch',
                         hide_index=True,
                         column_config={
                             "timestamp": "Timestamp",
@@ -758,7 +758,7 @@ if uploaded_file is not None:
                                 title=f"Who said '{search_term_clean}'?",
                                 hole=0.3,
                             )
-                            st.plotly_chart(fig_who, use_container_width=True)
+                            st.plotly_chart(fig_who, width='stretch')
 
                         with col2:
                             # Timeline of the word
@@ -774,7 +774,7 @@ if uploaded_file is not None:
                                 title=f"When was '{search_term_clean}' used?",
                                 markers=True,
                             )
-                            st.plotly_chart(fig_when, use_container_width=True)
+                            st.plotly_chart(fig_when, width='stretch')
                     else:
                         st.warning(
                             f"The word **'{search_term_clean}'** was not found anywhere in this chat."
@@ -813,7 +813,7 @@ if uploaded_file is not None:
                         color_continuous_scale="Sunset",
                     )
                     fig_emojis.update_traces(textposition="outside", textfont_size=20)
-                    st.plotly_chart(fig_emojis, use_container_width=True)
+                    st.plotly_chart(fig_emojis, width='stretch')
                 else:
                     st.info("No emojis found for this selection.")
 
