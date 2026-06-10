@@ -2,6 +2,7 @@ import json
 import re
 import string
 from collections import Counter
+from urllib.parse import urlparse
 
 import emoji
 import matplotlib.pyplot as plt
@@ -38,6 +39,95 @@ def download_nltk_data():
 
 
 stop_words = download_nltk_data()
+link_pattern = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
+
+
+@st.cache_data
+def extract_meaningful_words(text):
+    clean = str(text).lower().translate(str.maketrans("", "", string.punctuation))
+    return [word for word in clean.split() if word not in stop_words and len(word) > 2]
+
+
+@st.cache_data
+def normalize_message_text(text):
+    return re.sub(r"\s+", " ", str(text).strip().lower())
+
+
+@st.cache_data
+def get_unique_words_by_sender(df_subset, limit=10):
+    sender_counters = {
+        sender: Counter(
+            word
+            for message in sender_df["message"]
+            for word in extract_meaningful_words(message)
+        )
+        for sender, sender_df in df_subset.groupby("sender")
+    }
+    all_senders = list(sender_counters.keys())
+    unique_words = {}
+
+    for sender in all_senders:
+        other_words = set()
+        for other_sender in all_senders:
+            if other_sender != sender:
+                other_words.update(sender_counters[other_sender].keys())
+
+        unique_words[sender] = [
+            {"Item": word, "Count": count}
+            for word, count in sender_counters[sender].most_common()
+            if word not in other_words
+        ][:limit]
+
+    return unique_words
+
+
+@st.cache_data
+def get_unique_messages_by_sender(df_subset, limit=10):
+    normalized_df = df_subset[["sender", "message"]].copy()
+    normalized_df["normalized_message"] = normalized_df["message"].apply(
+        normalize_message_text
+    )
+    normalized_df = normalized_df[normalized_df["normalized_message"] != ""]
+
+    if normalized_df.empty:
+        return {}
+
+    message_owners = normalized_df.groupby("normalized_message")["sender"].nunique()
+    unique_message_rows = normalized_df[
+        normalized_df["normalized_message"].map(message_owners) == 1
+    ]
+
+    unique_messages = {}
+    for sender, sender_df in unique_message_rows.groupby("sender"):
+        sender_counts = Counter(sender_df["normalized_message"])
+        sender_examples = (
+            sender_df.drop_duplicates(subset=["normalized_message"])
+            .set_index("normalized_message")["message"]
+            .to_dict()
+        )
+        unique_messages[sender] = [
+            {"Item": sender_examples[message], "Count": count}
+            for message, count in sender_counts.most_common(limit)
+        ]
+
+    for sender in df_subset["sender"].unique():
+        unique_messages.setdefault(sender, [])
+
+    return unique_messages
+
+
+@st.cache_data
+def extract_links(text):
+    return link_pattern.findall(str(text))
+
+
+@st.cache_data
+def normalize_domain(link):
+    candidate = link if re.match(r"^https?://", link, re.IGNORECASE) else f"https://{link}"
+    domain = urlparse(candidate).netloc.lower()
+    if domain.startswith("www."):
+        domain = domain[4:]
+    return domain
 
 
 # --- Parsing Functions (Cached for Performance) ---
@@ -132,6 +222,8 @@ def preprocess_dataframe(df):
     df["emojis"] = df["message"].apply(
         lambda x: [c for c in str(x) if c in emoji.EMOJI_DATA]
     )
+    df["links"] = df["message"].apply(extract_links)
+    df["link_count"] = df["links"].apply(len)
 
     return df
 
@@ -213,6 +305,37 @@ if uploaded_file is not None:
             total_chars = df["char_count"].sum()
             total_days = df["date"].nunique()
             participants = df["sender"].nunique()
+            msgs_per_user = df["sender"].value_counts()
+
+            unique_word_counts = {}
+            for sender, sender_df in df.groupby("sender"):
+                sender_words = set()
+                for message in sender_df["message"]:
+                    sender_words.update(extract_meaningful_words(message))
+                unique_word_counts[sender] = len(sender_words)
+
+            most_messages_person = msgs_per_user.idxmax() if not msgs_per_user.empty else ""
+            most_messages_count = int(msgs_per_user.max()) if not msgs_per_user.empty else 0
+            most_unique_words_person = (
+                max(unique_word_counts, key=unique_word_counts.get)
+                if unique_word_counts
+                else ""
+            )
+            most_unique_words_count = (
+                unique_word_counts[most_unique_words_person]
+                if most_unique_words_person
+                else 0
+            )
+            per_person_stats = pd.DataFrame(
+                [
+                    {
+                        "Participant": sender,
+                        "Messages": int(msgs_per_user.get(sender, 0)),
+                        "Unique Words": unique_word_counts.get(sender, 0),
+                    }
+                    for sender in msgs_per_user.index
+                ]
+            )
 
             # --- Advanced Metrics (Starters & Streaks) ---
             df = df.sort_values("timestamp").reset_index(drop=True)
@@ -242,11 +365,12 @@ if uploaded_file is not None:
             first_sender = df["sender"].iloc[0] if not df.empty else ""
 
             # --- Tabs ---
-            tab_overview, tab_time, tab_words, tab_search, tab_emojis = st.tabs(
+            tab_overview, tab_time, tab_words, tab_links, tab_search, tab_emojis = st.tabs(
                 [
                     "Overview",
                     "Activity Timeline",
                     "Word Analysis",
+                    "Link Analysis",
                     "Word Searcher",
                     "Emoji Usage",
                 ]
@@ -272,14 +396,37 @@ if uploaded_file is not None:
                 m5.metric("Participants", f"{participants:,}")
 
                 st.markdown("---")
+                st.subheader("Per-Person Leaders")
+                l1, l2 = st.columns(2)
+                l1.metric(
+                    "Most Messages",
+                    most_messages_person or "N/A",
+                    f"{most_messages_count:,} messages" if most_messages_count else None,
+                )
+                l2.metric(
+                    "Most Unique Words",
+                    most_unique_words_person or "N/A",
+                    f"{most_unique_words_count:,} unique words"
+                    if most_unique_words_count
+                    else None,
+                )
+
+                if not per_person_stats.empty:
+                    st.dataframe(
+                        per_person_stats,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+                st.markdown("---")
 
                 col1, col2 = st.columns(2)
                 with col1:
                     st.subheader("Messages by Participant")
-                    msgs_per_user = df["sender"].value_counts().reset_index()
-                    msgs_per_user.columns = ["Participant", "Messages"]
+                    msgs_per_user_df = msgs_per_user.reset_index()
+                    msgs_per_user_df.columns = ["Participant", "Messages"]
                     fig = px.pie(
-                        msgs_per_user,
+                        msgs_per_user_df,
                         values="Messages",
                         names="Participant",
                         hole=0.4,
@@ -386,18 +533,7 @@ if uploaded_file is not None:
                 def get_top_words(df_subset):
                     words = []
                     for text in df_subset["message"]:
-                        clean = (
-                            str(text)
-                            .lower()
-                            .translate(str.maketrans("", "", string.punctuation))
-                        )
-                        words.extend(
-                            [
-                                w
-                                for w in clean.split()
-                                if w not in stop_words and len(w) > 2
-                            ]
-                        )
+                        words.extend(extract_meaningful_words(text))
                     return Counter(words).most_common(15)
 
                 selected_user_word = st.selectbox(
@@ -424,6 +560,150 @@ if uploaded_file is not None:
                     st.plotly_chart(fig_words, use_container_width=True)
                 else:
                     st.info("Not enough textual data to analyze words.")
+
+                st.markdown("---")
+                st.subheader("Per-Person Unique Language")
+                st.markdown(
+                    "These lists show words and messages used by one participant and not by the others in the current filtered view."
+                )
+
+                unique_words_by_sender = get_unique_words_by_sender(df)
+                unique_messages_by_sender = get_unique_messages_by_sender(df)
+
+                for sender in df["sender"].unique():
+                    st.markdown(f"#### {sender}")
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.markdown("**Top Unique Words**")
+                        sender_unique_words = unique_words_by_sender.get(sender, [])
+                        if sender_unique_words:
+                            st.dataframe(
+                                pd.DataFrame(sender_unique_words),
+                                use_container_width=True,
+                                hide_index=True,
+                            )
+                        else:
+                            st.info("No unique words found for this participant.")
+
+                    with col2:
+                        st.markdown("**Top Unique Messages**")
+                        sender_unique_messages = unique_messages_by_sender.get(sender, [])
+                        if sender_unique_messages:
+                            st.dataframe(
+                                pd.DataFrame(sender_unique_messages),
+                                use_container_width=True,
+                                hide_index=True,
+                                column_config={
+                                    "Item": st.column_config.TextColumn(
+                                        "Item",
+                                        width="large",
+                                    )
+                                },
+                            )
+                        else:
+                            st.info("No unique messages found for this participant.")
+
+            with tab_links:
+                st.subheader("Link Analysis")
+                st.markdown(
+                    "Track who shares the most internet links and which domains show up most often in the current filtered view."
+                )
+
+                link_df = df[df["link_count"] > 0].copy()
+
+                if link_df.empty:
+                    st.info("No internet links found for the current selection.")
+                else:
+                    total_links = int(link_df["link_count"].sum())
+                    total_link_messages = int(len(link_df))
+                    links_per_sender = (
+                        link_df.groupby("sender")["link_count"].sum().sort_values(ascending=False)
+                    )
+                    link_messages_per_sender = (
+                        link_df.groupby("sender").size().sort_values(ascending=False)
+                    )
+                    domain_counts = Counter(
+                        normalize_domain(link)
+                        for links in link_df["links"]
+                        for link in links
+                        if normalize_domain(link)
+                    )
+
+                    m1, m2 = st.columns(2)
+                    m1.metric("Messages With Links", f"{total_link_messages:,}")
+                    m2.metric("Total Links Shared", f"{total_links:,}")
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.subheader("Who Posts Most Links")
+                        sender_links_df = links_per_sender.reset_index()
+                        sender_links_df.columns = ["Participant", "Links"]
+                        fig_sender_links = px.bar(
+                            sender_links_df,
+                            x="Participant",
+                            y="Links",
+                            text="Links",
+                            color="Participant",
+                            color_discrete_sequence=px.colors.qualitative.Safe,
+                        )
+                        st.plotly_chart(fig_sender_links, use_container_width=True)
+
+                        sender_link_message_df = link_messages_per_sender.reset_index()
+                        sender_link_message_df.columns = ["Participant", "Messages With Links"]
+                        st.dataframe(
+                            sender_link_message_df,
+                            use_container_width=True,
+                            hide_index=True,
+                        )
+
+                    with col2:
+                        st.subheader("Top Domains")
+                        if domain_counts:
+                            domain_df = pd.DataFrame(
+                                domain_counts.most_common(15),
+                                columns=["Domain", "Links"],
+                            )
+                            fig_domains = px.bar(
+                                domain_df,
+                                x="Links",
+                                y="Domain",
+                                orientation="h",
+                                color="Links",
+                                color_continuous_scale="Tealgrn",
+                            )
+                            fig_domains.update_layout(
+                                yaxis={"categoryorder": "total ascending"}
+                            )
+                            st.plotly_chart(fig_domains, use_container_width=True)
+                            st.dataframe(
+                                domain_df,
+                                use_container_width=True,
+                                hide_index=True,
+                            )
+                        else:
+                            st.info("No domains could be extracted from the links found.")
+
+                    st.markdown("---")
+                    st.subheader("Recent Messages With Links")
+                    recent_links_df = link_df.sort_values("timestamp", ascending=False)[
+                        ["timestamp", "sender", "message", "link_count"]
+                    ].head(20)
+                    st.dataframe(
+                        recent_links_df,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "timestamp": "Timestamp",
+                            "sender": "Participant",
+                            "message": st.column_config.TextColumn(
+                                "Message",
+                                width="large",
+                            ),
+                            "link_count": "Links",
+                        },
+                    )
 
             with tab_search:
                 st.subheader("'Who Said It?' Word Searcher")
