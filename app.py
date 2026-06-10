@@ -40,6 +40,7 @@ def download_nltk_data():
 
 stop_words = download_nltk_data()
 link_pattern = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
+ALMOST_UNIQUE_SHARE = 0.8
 
 
 @st.cache_data
@@ -54,6 +55,14 @@ def normalize_message_text(text):
 
 
 @st.cache_data
+def is_almost_unique_to_sender(sender_count, total_count, share_threshold=ALMOST_UNIQUE_SHARE):
+    other_count = total_count - sender_count
+    if other_count <= 0:
+        return True
+    return sender_count > other_count and (sender_count / total_count) >= share_threshold
+
+
+@st.cache_data
 def get_unique_words_by_sender(df_subset, limit=10):
     sender_counters = {
         sender: Counter(
@@ -64,18 +73,16 @@ def get_unique_words_by_sender(df_subset, limit=10):
         for sender, sender_df in df_subset.groupby("sender")
     }
     all_senders = list(sender_counters.keys())
+    total_word_counts = Counter()
+    for counter in sender_counters.values():
+        total_word_counts.update(counter)
     unique_words = {}
 
     for sender in all_senders:
-        other_words = set()
-        for other_sender in all_senders:
-            if other_sender != sender:
-                other_words.update(sender_counters[other_sender].keys())
-
         unique_words[sender] = [
             {"Item": word, "Count": count}
             for word, count in sender_counters[sender].most_common()
-            if word not in other_words
+            if is_almost_unique_to_sender(count, total_word_counts[word])
         ][:limit]
 
     return unique_words
@@ -87,18 +94,17 @@ def get_unique_messages_by_sender(df_subset, limit=10):
     normalized_df["normalized_message"] = normalized_df["message"].apply(
         normalize_message_text
     )
-    normalized_df = normalized_df[normalized_df["normalized_message"] != ""]
+    normalized_df = normalized_df[
+        normalized_df["normalized_message"].str.split().str.len() >= 2
+    ]
 
     if normalized_df.empty:
         return {}
 
-    message_owners = normalized_df.groupby("normalized_message")["sender"].nunique()
-    unique_message_rows = normalized_df[
-        normalized_df["normalized_message"].map(message_owners) == 1
-    ]
+    total_message_counts = normalized_df["normalized_message"].value_counts()
 
     unique_messages = {}
-    for sender, sender_df in unique_message_rows.groupby("sender"):
+    for sender, sender_df in normalized_df.groupby("sender"):
         sender_counts = Counter(sender_df["normalized_message"])
         sender_examples = (
             sender_df.drop_duplicates(subset=["normalized_message"])
@@ -107,8 +113,9 @@ def get_unique_messages_by_sender(df_subset, limit=10):
         )
         unique_messages[sender] = [
             {"Item": sender_examples[message], "Count": count}
-            for message, count in sender_counts.most_common(limit)
-        ]
+            for message, count in sender_counts.most_common()
+            if is_almost_unique_to_sender(count, int(total_message_counts[message]))
+        ][:limit]
 
     for sender in df_subset["sender"].unique():
         unique_messages.setdefault(sender, [])
@@ -564,7 +571,7 @@ if uploaded_file is not None:
                 st.markdown("---")
                 st.subheader("Per-Person Unique Language")
                 st.markdown(
-                    "These lists show words and messages used by one participant and not by the others in the current filtered view."
+                    "These lists show words and repeated phrases that are strongly associated with one participant in the current filtered view, even if someone else used them occasionally."
                 )
 
                 unique_words_by_sender = get_unique_words_by_sender(df)
@@ -587,7 +594,7 @@ if uploaded_file is not None:
                             st.info("No unique words found for this participant.")
 
                     with col2:
-                        st.markdown("**Top Unique Messages**")
+                        st.markdown("**Top Unique Phrases**")
                         sender_unique_messages = unique_messages_by_sender.get(sender, [])
                         if sender_unique_messages:
                             st.dataframe(
@@ -602,7 +609,7 @@ if uploaded_file is not None:
                                 },
                             )
                         else:
-                            st.info("No unique messages found for this participant.")
+                            st.info("No unique phrases found for this participant.")
 
             with tab_links:
                 st.subheader("Link Analysis")
