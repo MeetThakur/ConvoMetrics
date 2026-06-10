@@ -458,6 +458,144 @@ if uploaded_file is not None:
 
             with tab_time:
                 st.subheader("Activity Over Time")
+
+                timeline_anchor = df["timestamp"].max().normalize()
+                start_365 = timeline_anchor - pd.Timedelta(days=364)
+                start_ytd = pd.Timestamp(year=timeline_anchor.year, month=1, day=1)
+                current_month_start = pd.Timestamp(
+                    year=timeline_anchor.year,
+                    month=timeline_anchor.month,
+                    day=1,
+                )
+                last_full_month_end = current_month_start - pd.Timedelta(days=1)
+                last_full_month_start = pd.Timestamp(
+                    year=last_full_month_end.year,
+                    month=last_full_month_end.month,
+                    day=1,
+                )
+                prev_365_start = start_365 - pd.Timedelta(days=365)
+                prev_365_end = start_365 - pd.Timedelta(days=1)
+                ytd_days = (timeline_anchor - start_ytd).days + 1
+                prev_ytd_start = start_ytd - pd.DateOffset(years=1)
+                prev_ytd_end = prev_ytd_start + pd.Timedelta(days=ytd_days - 1)
+                prev_month_end = last_full_month_start - pd.Timedelta(days=1)
+                prev_month_start = pd.Timestamp(
+                    year=prev_month_end.year,
+                    month=prev_month_end.month,
+                    day=1,
+                )
+
+                def period_counts(start_ts, end_ts):
+                    mask = (df["timestamp"] >= start_ts) & (df["timestamp"] <= end_ts)
+                    return df.loc[mask].groupby("sender").size()
+
+                counts_365 = period_counts(start_365, timeline_anchor)
+                counts_ytd = period_counts(start_ytd, timeline_anchor)
+                counts_last_full_month = period_counts(
+                    last_full_month_start,
+                    last_full_month_end + pd.Timedelta(hours=23, minutes=59, seconds=59),
+                )
+                prev_counts_365 = period_counts(
+                    prev_365_start,
+                    prev_365_end + pd.Timedelta(hours=23, minutes=59, seconds=59),
+                )
+                prev_counts_ytd = period_counts(
+                    prev_ytd_start,
+                    prev_ytd_end + pd.Timedelta(hours=23, minutes=59, seconds=59),
+                )
+                prev_counts_last_full_month = period_counts(
+                    prev_month_start,
+                    prev_month_end + pd.Timedelta(hours=23, minutes=59, seconds=59),
+                )
+
+                def format_pct_change(current_value, previous_value):
+                    if previous_value <= 0:
+                        return "N/A"
+                    pct = ((current_value - previous_value) / previous_value) * 100
+                    return f"{pct:+.1f}%"
+
+                timeline_person_stats = (
+                    df.groupby("sender")
+                    .agg(
+                        Messages=("message", "size"),
+                        Active_Days=("date", "nunique"),
+                        First_Message=("timestamp", "min"),
+                        Last_Message=("timestamp", "max"),
+                    )
+                    .reset_index()
+                    .rename(columns={"sender": "Participant"})
+                )
+                timeline_person_stats["Avg Messages / Active Day"] = (
+                    timeline_person_stats["Messages"]
+                    / timeline_person_stats["Active_Days"].replace(0, pd.NA)
+                ).round(2)
+                timeline_person_stats["Share of Total Messages (%)"] = (
+                    timeline_person_stats["Messages"] / max(total_msgs, 1) * 100
+                ).round(1)
+                timeline_person_stats["First Message"] = timeline_person_stats[
+                    "First_Message"
+                ].dt.strftime("%Y-%m-%d %H:%M")
+                timeline_person_stats["Last Message"] = timeline_person_stats[
+                    "Last_Message"
+                ].dt.strftime("%Y-%m-%d %H:%M")
+                timeline_person_stats["Last 365 Days"] = timeline_person_stats[
+                    "Participant"
+                ].map(counts_365).fillna(0).astype(int)
+                timeline_person_stats["YTD"] = timeline_person_stats[
+                    "Participant"
+                ].map(counts_ytd).fillna(0).astype(int)
+                timeline_person_stats["Last Full Month"] = timeline_person_stats[
+                    "Participant"
+                ].map(counts_last_full_month).fillna(0).astype(int)
+                timeline_person_stats["Last 365 Days Delta (%)"] = timeline_person_stats.apply(
+                    lambda row: format_pct_change(
+                        row["Last 365 Days"],
+                        int(prev_counts_365.get(row["Participant"], 0)),
+                    ),
+                    axis=1,
+                )
+                timeline_person_stats["YTD Delta (%)"] = timeline_person_stats.apply(
+                    lambda row: format_pct_change(
+                        row["YTD"],
+                        int(prev_counts_ytd.get(row["Participant"], 0)),
+                    ),
+                    axis=1,
+                )
+                timeline_person_stats["Last Full Month Delta (%)"] = timeline_person_stats.apply(
+                    lambda row: format_pct_change(
+                        row["Last Full Month"],
+                        int(prev_counts_last_full_month.get(row["Participant"], 0)),
+                    ),
+                    axis=1,
+                )
+
+                st.markdown("Per-person statistics for the current filtered timeline.")
+                st.caption(
+                    "Delta (%) columns compare against the previous equivalent period for each participant."
+                )
+                st.dataframe(
+                    timeline_person_stats[
+                        [
+                            "Participant",
+                            "Messages",
+                            "Active_Days",
+                            "Avg Messages / Active Day",
+                            "Share of Total Messages (%)",
+                            "Last 365 Days",
+                            "Last 365 Days Delta (%)",
+                            "YTD",
+                            "YTD Delta (%)",
+                            "Last Full Month",
+                            "Last Full Month Delta (%)",
+                            "First Message",
+                            "Last Message",
+                        ]
+                    ],
+                    width='stretch',
+                    hide_index=True,
+                )
+                st.markdown("---")
+
                 daily_msgs = df.groupby("date").size().reset_index(name="Messages")
                 fig_time = px.line(
                     daily_msgs,
@@ -537,9 +675,9 @@ if uploaded_file is not None:
                 st.subheader("Top Words Used (Excluding Stopwords)")
 
                 @st.cache_data
-                def get_top_words(df_subset):
+                def get_top_words(messages):
                     words = []
-                    for text in df_subset["message"]:
+                    for text in messages:
                         words.extend(extract_meaningful_words(text))
                     return Counter(words).most_common(15)
 
@@ -549,9 +687,11 @@ if uploaded_file is not None:
                 )
 
                 if selected_user_word == "All":
-                    top_words = get_top_words(df)
+                    top_words = get_top_words(df["message"])
                 else:
-                    top_words = get_top_words(df[df["sender"] == selected_user_word])
+                    top_words = get_top_words(
+                        df.loc[df["sender"] == selected_user_word, "message"]
+                    )
 
                 if top_words:
                     word_df = pd.DataFrame(top_words, columns=["Word", "Count"])
@@ -574,8 +714,11 @@ if uploaded_file is not None:
                     "These lists show words and repeated phrases that are strongly associated with one participant in the current filtered view, even if someone else used them occasionally."
                 )
 
-                unique_words_by_sender = get_unique_words_by_sender(df)
-                unique_messages_by_sender = get_unique_messages_by_sender(df)
+                sender_message_df = df[["sender", "message"]].copy()
+                unique_words_by_sender = get_unique_words_by_sender(sender_message_df)
+                unique_messages_by_sender = get_unique_messages_by_sender(
+                    sender_message_df
+                )
 
                 for sender in df["sender"].unique():
                     st.markdown(f"#### {sender}")
@@ -784,10 +927,10 @@ if uploaded_file is not None:
                 st.subheader("Emoji Analytics")
 
                 @st.cache_data
-                def get_top_emojis(df_subset):
+                def get_top_emojis(emoji_sequences):
                     all_emojis = [
                         emoji
-                        for emoji_list in df_subset["emojis"]
+                        for emoji_list in emoji_sequences
                         for emoji in emoji_list
                     ]
                     return Counter(all_emojis).most_common(10)
@@ -798,9 +941,16 @@ if uploaded_file is not None:
                 )
 
                 if selected_user_emoji == "All":
-                    top_emojis = get_top_emojis(df)
+                    top_emojis = get_top_emojis(tuple(tuple(v) for v in df["emojis"]))
                 else:
-                    top_emojis = get_top_emojis(df[df["sender"] == selected_user_emoji])
+                    top_emojis = get_top_emojis(
+                        tuple(
+                            tuple(v)
+                            for v in df.loc[
+                                df["sender"] == selected_user_emoji, "emojis"
+                            ]
+                        )
+                    )
 
                 if top_emojis:
                     emoji_df = pd.DataFrame(top_emojis, columns=["Emoji", "Count"])
