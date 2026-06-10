@@ -1,7 +1,9 @@
 import json
+import math
 import re
 import string
 from collections import Counter
+from pathlib import Path
 from urllib.parse import urlparse
 
 import emoji
@@ -9,6 +11,7 @@ import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
@@ -41,6 +44,20 @@ def download_nltk_data():
 stop_words = download_nltk_data()
 link_pattern = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 ALMOST_UNIQUE_SHARE = 0.8
+FINNISH_COMMON_WORDS_PATH = Path(__file__).with_name("sanat.txt")
+
+
+@st.cache_resource
+def load_finnish_common_words():
+    if not FINNISH_COMMON_WORDS_PATH.exists():
+        return set()
+
+    with FINNISH_COMMON_WORDS_PATH.open("r", encoding="utf-8") as word_file:
+        return {
+            line.strip().lower()
+            for line in word_file
+            if line.strip() and not line.startswith("#")
+        }
 
 
 @st.cache_data
@@ -135,6 +152,9 @@ def normalize_domain(link):
     if domain.startswith("www."):
         domain = domain[4:]
     return domain
+
+
+finnish_common_words = load_finnish_common_words()
 
 
 # --- Parsing Functions (Cached for Performance) ---
@@ -233,6 +253,40 @@ def preprocess_dataframe(df):
     df["link_count"] = df["links"].apply(len)
 
     return df
+
+
+@st.cache_data
+def build_conversations(df_subset, gap_hours=8):
+    """Assign conversation IDs based on inactivity gaps between messages."""
+    df = df_subset.sort_values("timestamp").reset_index(drop=True)
+    time_diff = df["timestamp"].diff()
+    new_convo = (time_diff > pd.Timedelta(hours=gap_hours)) | time_diff.isna()
+    df["conversation_id"] = new_convo.cumsum().astype(int)
+    return df
+
+
+@st.cache_data
+def build_interaction_matrix(ts_sender_tuples, window_minutes=5):
+    """
+    Count pairwise interactions using a sliding time window.
+    If person B sends a message within window_minutes of person A, it counts
+    as an interaction between A and B.
+    ts_sender_tuples: tuple of (timestamp, sender) sorted by timestamp.
+    """
+    window = pd.Timedelta(minutes=window_minutes)
+    interactions = Counter()
+    n = len(ts_sender_tuples)
+    j_start = 0
+    for i in range(n):
+        ts_i, sender_i = ts_sender_tuples[i]
+        while j_start < i and (ts_i - ts_sender_tuples[j_start][0]) > window:
+            j_start += 1
+        for j in range(j_start, i):
+            ts_j, sender_j = ts_sender_tuples[j]
+            if sender_j != sender_i:
+                pair = tuple(sorted([sender_i, sender_j]))
+                interactions[pair] += 1
+    return interactions
 
 
 # --- Sidebar UI ---
@@ -372,7 +426,7 @@ if uploaded_file is not None:
             first_sender = df["sender"].iloc[0] if not df.empty else ""
 
             # --- Tabs ---
-            tab_overview, tab_time, tab_words, tab_links, tab_search, tab_emojis = st.tabs(
+            tab_overview, tab_time, tab_words, tab_links, tab_search, tab_emojis, tab_conversations = st.tabs(
                 [
                     "Overview",
                     "Activity Timeline",
@@ -380,6 +434,7 @@ if uploaded_file is not None:
                     "Link Analysis",
                     "Word Searcher",
                     "Emoji Usage",
+                    "Conversations",
                 ]
             )
 
@@ -755,6 +810,8 @@ if uploaded_file is not None:
                 # Combine text and generate Word Cloud
                 all_messages = " ".join(df["message"].astype(str))
                 if len(all_messages.strip()) > 10:
+                    word_cloud_col, long_word_cloud_col = st.columns(2)
+
                     wordcloud = WordCloud(
                         width=1200,
                         height=500,
@@ -767,7 +824,64 @@ if uploaded_file is not None:
                     fig_wc, ax = plt.subplots(figsize=(15, 6))
                     ax.imshow(wordcloud, interpolation="bilinear")
                     ax.axis("off")
-                    st.pyplot(fig_wc)
+                    with word_cloud_col:
+                        st.markdown("#### All Meaningful Words")
+                        st.pyplot(fig_wc)
+
+                    long_words = []
+                    for message in df["message"]:
+                        long_words.extend(
+                            word
+                            for word in extract_meaningful_words(message)
+                            if len(word) > 6
+                        )
+
+                    with long_word_cloud_col:
+                        st.markdown("#### Longer Words (>6 Characters)")
+                        if long_words:
+                            long_wordcloud = WordCloud(
+                                width=1200,
+                                height=500,
+                                background_color="white",
+                                stopwords=stop_words,
+                                colormap="magma",
+                                max_words=150,
+                            ).generate(" ".join(long_words))
+
+                            fig_long_wc, ax_long = plt.subplots(figsize=(15, 6))
+                            ax_long.imshow(long_wordcloud, interpolation="bilinear")
+                            ax_long.axis("off")
+                            st.pyplot(fig_long_wc)
+                        else:
+                            st.info("No words longer than 6 characters were found.")
+
+                    st.markdown("#### Words Outside Finnish Common Word List")
+                    uncommon_words = []
+                    for message in df["message"]:
+                        uncommon_words.extend(
+                            word
+                            for word in extract_meaningful_words(message)
+                            if word.isalpha() and word not in finnish_common_words
+                        )
+
+                    if uncommon_words:
+                        uncommon_wordcloud = WordCloud(
+                            width=1200,
+                            height=500,
+                            background_color="white",
+                            stopwords=stop_words,
+                            colormap="cividis",
+                            max_words=150,
+                        ).generate(" ".join(uncommon_words))
+
+                        fig_uncommon_wc, ax_uncommon = plt.subplots(figsize=(15, 6))
+                        ax_uncommon.imshow(uncommon_wordcloud, interpolation="bilinear")
+                        ax_uncommon.axis("off")
+                        st.pyplot(fig_uncommon_wc)
+                    else:
+                        st.info(
+                            "All detected words are present in sanat.txt for the current filters."
+                        )
                 else:
                     st.info("Not enough textual data to generate a Word Cloud.")
 
@@ -1066,6 +1180,260 @@ if uploaded_file is not None:
                     st.plotly_chart(fig_emojis, width='stretch')
                 else:
                     st.info("No emojis found for this selection.")
+
+            with tab_conversations:
+                st.subheader("Conversation Explorer")
+                st.markdown(
+                    "Messages are grouped into conversations based on inactivity gaps. "
+                    "The relationship graph shows how often participants respond to each other."
+                )
+
+                gap_hours = st.slider(
+                    "Conversation gap (hours) — a new conversation starts after this much silence",
+                    min_value=1, max_value=48, value=8, step=1,
+                )
+
+                df_convos = build_conversations(
+                    df[["timestamp", "sender", "message"]], gap_hours=gap_hours
+                )
+
+                convo_summary = (
+                    df_convos.groupby("conversation_id")
+                    .agg(
+                        Start=("timestamp", "min"),
+                        End=("timestamp", "max"),
+                        Messages=("message", "count"),
+                        Participants=("sender", lambda x: ", ".join(sorted(x.unique()))),
+                        Unique_Participants=("sender", "nunique"),
+                    )
+                    .reset_index(drop=True)
+                )
+                convo_summary["Duration"] = (convo_summary["End"] - convo_summary["Start"]).apply(
+                    lambda d: (
+                        f"{int(d.total_seconds() // 3600)}h {int((d.total_seconds() % 3600) // 60)}m"
+                        if d.total_seconds() >= 60
+                        else "< 1 min"
+                    )
+                )
+                convo_summary["Start_fmt"] = convo_summary["Start"].dt.strftime("%Y-%m-%d %H:%M")
+                convo_summary["End_fmt"] = convo_summary["End"].dt.strftime("%Y-%m-%d %H:%M")
+
+                total_convos = len(convo_summary)
+                avg_msgs = convo_summary["Messages"].mean()
+                max_msgs = int(convo_summary["Messages"].max())
+
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Total Conversations", f"{total_convos:,}")
+                m2.metric("Avg Messages / Conversation", f"{avg_msgs:.1f}")
+                m3.metric("Longest Conversation", f"{max_msgs:,} messages")
+
+                st.markdown("---")
+                st.subheader("All Conversations")
+                st.dataframe(
+                    convo_summary[["Start_fmt", "End_fmt", "Duration", "Messages", "Unique_Participants", "Participants"]].rename(
+                        columns={
+                            "Start_fmt": "Start",
+                            "End_fmt": "End",
+                            "Unique_Participants": "# Participants",
+                        }
+                    ),
+                    width='stretch',
+                    hide_index=True,
+                )
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.subheader("Conversation Length Distribution")
+                    fig_hist = px.histogram(
+                        convo_summary,
+                        x="Messages",
+                        nbins=30,
+                        labels={"Messages": "Messages per Conversation"},
+                        color_discrete_sequence=["#636EFA"],
+                    )
+                    fig_hist.update_layout(bargap=0.05)
+                    st.plotly_chart(fig_hist, width='stretch')
+
+                with col2:
+                    st.subheader("Conversations by Month")
+                    convo_months = convo_summary["Start"].dt.to_period("M").astype(str).value_counts().sort_index().reset_index()
+                    convo_months.columns = ["Month", "Conversations"]
+                    fig_monthly = px.bar(
+                        convo_months,
+                        x="Month",
+                        y="Conversations",
+                        color_discrete_sequence=["#EF553B"],
+                    )
+                    st.plotly_chart(fig_monthly, width='stretch')
+
+                st.markdown("---")
+                st.subheader("Browse a Conversation")
+                convo_options = [
+                    f"#{i + 1} — {row['Start_fmt']}  ({row['Messages']} messages · {row['Participants']})"
+                    for i, row in convo_summary.iterrows()
+                ]
+                selected_label = st.selectbox("Select a conversation to inspect", convo_options)
+                if selected_label:
+                    selected_idx = convo_options.index(selected_label)
+                    # conversation_id is 1-indexed (cumsum starts at 1)
+                    convo_msgs = df_convos[df_convos["conversation_id"] == selected_idx + 1][
+                        ["timestamp", "sender", "message"]
+                    ].sort_values("timestamp").copy()
+                    convo_msgs["timestamp"] = convo_msgs["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
+                    st.dataframe(
+                        convo_msgs,
+                        width='stretch',
+                        hide_index=True,
+                        column_config={
+                            "timestamp": "Time",
+                            "sender": "Participant",
+                            "message": st.column_config.TextColumn("Message", width="large"),
+                        },
+                    )
+
+                st.markdown("---")
+                st.subheader("Interaction Relationship Graph")
+                st.markdown(
+                    "Edges connect participants who exchange messages within a short time window. "
+                    "Thicker edges and larger nodes indicate more frequent interactions."
+                )
+
+                window_minutes = st.slider(
+                    "Interaction window (minutes) — how quickly a reply counts as a direct response",
+                    min_value=1, max_value=60, value=10, step=1,
+                )
+
+                ts_sender_tuples = tuple(
+                    zip(df["timestamp"].tolist(), df["sender"].tolist())
+                )
+                interactions = build_interaction_matrix(ts_sender_tuples, window_minutes=window_minutes)
+
+                senders = list(df["sender"].unique())
+
+                if len(senders) < 2:
+                    st.info("Need at least 2 participants to draw a relationship graph.")
+                elif not interactions:
+                    st.info("No interactions found within the selected time window. Try increasing it.")
+                else:
+                    n_senders = len(senders)
+                    angles = [2 * math.pi * i / n_senders for i in range(n_senders)]
+                    node_x = [math.cos(a) for a in angles]
+                    node_y = [math.sin(a) for a in angles]
+                    sender_pos = {s: (node_x[i], node_y[i]) for i, s in enumerate(senders)}
+                    max_count = max(interactions.values())
+
+                    edge_traces = []
+                    for (s1, s2), count in interactions.items():
+                        if s1 not in sender_pos or s2 not in sender_pos:
+                            continue
+                        x0, y0 = sender_pos[s1]
+                        x1, y1 = sender_pos[s2]
+                        width = 2 + 12 * (count / max_count)
+                        opacity = 0.3 + 0.7 * (count / max_count)
+                        mid_x = (x0 + x1) / 2
+                        mid_y = (y0 + y1) / 2
+                        edge_traces.append(
+                            go.Scatter(
+                                x=[x0, x1, None],
+                                y=[y0, y1, None],
+                                mode="lines",
+                                line=dict(width=width, color=f"rgba(99,110,250,{opacity:.2f})"),
+                                hoverinfo="skip",
+                                showlegend=False,
+                            )
+                        )
+                        # Edge label showing count
+                        edge_traces.append(
+                            go.Scatter(
+                                x=[mid_x],
+                                y=[mid_y],
+                                mode="text",
+                                text=[f"{count:,}"],
+                                textfont=dict(size=10, color="#444"),
+                                hoverinfo="skip",
+                                showlegend=False,
+                            )
+                        )
+
+                    node_interaction_totals = Counter()
+                    for (s1, s2), count in interactions.items():
+                        node_interaction_totals[s1] += count
+                        node_interaction_totals[s2] += count
+
+                    max_node_total = max(node_interaction_totals.values(), default=1)
+                    node_sizes = [
+                        25 + 35 * (node_interaction_totals.get(s, 0) / max_node_total)
+                        for s in senders
+                    ]
+                    node_hover = [
+                        f"<b>{s}</b><br>Total interactions: {node_interaction_totals.get(s, 0):,}"
+                        for s in senders
+                    ]
+
+                    node_trace = go.Scatter(
+                        x=node_x,
+                        y=node_y,
+                        mode="markers+text",
+                        text=senders,
+                        textposition="top center",
+                        hovertext=node_hover,
+                        hoverinfo="text",
+                        marker=dict(
+                            size=node_sizes,
+                            color=[node_interaction_totals.get(s, 0) for s in senders],
+                            colorscale="Viridis",
+                            showscale=True,
+                            colorbar=dict(title="Interactions"),
+                            line=dict(width=2, color="white"),
+                        ),
+                        showlegend=False,
+                    )
+
+                    fig_network = go.Figure(data=edge_traces + [node_trace])
+                    fig_network.update_layout(
+                        height=560,
+                        showlegend=False,
+                        xaxis=dict(visible=False, range=[-1.6, 1.6]),
+                        yaxis=dict(visible=False, range=[-1.6, 1.6]),
+                        plot_bgcolor="white",
+                        paper_bgcolor="white",
+                        margin=dict(l=20, r=20, t=20, b=20),
+                    )
+                    st.plotly_chart(fig_network, width='stretch')
+
+                    st.markdown("---")
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.subheader("Interaction Heatmap")
+                        matrix = pd.DataFrame(0, index=senders, columns=senders)
+                        for (s1, s2), count in interactions.items():
+                            if s1 in matrix.index and s2 in matrix.columns:
+                                matrix.loc[s1, s2] = count
+                                matrix.loc[s2, s1] = count
+                        fig_heat = px.imshow(
+                            matrix,
+                            text_auto=True,
+                            color_continuous_scale="Blues",
+                            aspect="auto",
+                            labels=dict(x="Participant", y="Participant", color="Interactions"),
+                        )
+                        st.plotly_chart(fig_heat, width='stretch')
+
+                    with col2:
+                        st.subheader("Top Pairs by Interaction Count")
+                        interaction_rows = [
+                            {"Participant A": s1, "Participant B": s2, "Interactions": count}
+                            for (s1, s2), count in sorted(
+                                interactions.items(), key=lambda x: x[1], reverse=True
+                            )
+                        ]
+                        if interaction_rows:
+                            st.dataframe(
+                                pd.DataFrame(interaction_rows),
+                                width='stretch',
+                                hide_index=True,
+                            )
 
     except Exception as e:
         st.error(f"An error occurred while parsing the file: {e}")
