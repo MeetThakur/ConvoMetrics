@@ -514,6 +514,27 @@ if uploaded_file is not None:
                     pct = ((current_value - previous_value) / previous_value) * 100
                     return f"{pct:+.1f}%"
 
+                def trend_label(current_value, previous_value):
+                    if current_value == 0 and previous_value == 0:
+                        return "No recent activity"
+                    if previous_value == 0:
+                        return "More active"
+
+                    pct_change = ((current_value - previous_value) / previous_value) * 100
+                    if pct_change >= 15:
+                        return "More active"
+                    if pct_change <= -15:
+                        return "Less active"
+                    return "Steady"
+
+                def recent_window_counts(days, offset_days=0):
+                    end_ts = timeline_anchor - pd.Timedelta(days=offset_days)
+                    start_ts = end_ts - pd.Timedelta(days=days - 1)
+                    return period_counts(
+                        start_ts,
+                        end_ts + pd.Timedelta(hours=23, minutes=59, seconds=59),
+                    )
+
                 timeline_person_stats = (
                     df.groupby("sender")
                     .agg(
@@ -569,31 +590,67 @@ if uploaded_file is not None:
                     axis=1,
                 )
 
-                st.markdown("Per-person statistics for the current filtered timeline.")
+                counts_30 = recent_window_counts(30)
+                prev_counts_30 = recent_window_counts(30, offset_days=30)
+                counts_90 = recent_window_counts(90)
+                prev_counts_90 = recent_window_counts(90, offset_days=90)
+
+                trend_summary = timeline_person_stats[
+                    ["Participant", "Last_Message"]
+                ].copy()
+                trend_summary["Messages (Last 30d)"] = trend_summary["Participant"].map(
+                    counts_30
+                ).fillna(0).astype(int)
+                trend_summary["30d vs Previous 30d"] = trend_summary.apply(
+                    lambda row: f"{trend_label(row['Messages (Last 30d)'], int(prev_counts_30.get(row['Participant'], 0)))} ({format_pct_change(row['Messages (Last 30d)'], int(prev_counts_30.get(row['Participant'], 0)))})",
+                    axis=1,
+                )
+                trend_summary["Messages (Last 90d)"] = trend_summary["Participant"].map(
+                    counts_90
+                ).fillna(0).astype(int)
+                trend_summary["90d vs Previous 90d"] = trend_summary.apply(
+                    lambda row: f"{trend_label(row['Messages (Last 90d)'], int(prev_counts_90.get(row['Participant'], 0)))} ({format_pct_change(row['Messages (Last 90d)'], int(prev_counts_90.get(row['Participant'], 0)))})",
+                    axis=1,
+                )
+                trend_summary["Last Active"] = trend_summary["Last_Message"].dt.strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+                trend_summary = trend_summary.drop(columns=["Last_Message"]).sort_values(
+                    by=["Messages (Last 30d)", "Messages (Last 90d)"],
+                    ascending=False,
+                )
+
+                st.markdown("Simple per-person activity trends for the current filtered timeline.")
                 st.caption(
-                    "Delta (%) columns compare against the previous equivalent period for each participant."
+                    "\"More active\" and \"Less active\" compare each participant's recent 30-day and 90-day message counts against the immediately preceding matching window. \"Steady\" means the change stayed within +/-15%."
                 )
                 st.dataframe(
-                    timeline_person_stats[
-                        [
-                            "Participant",
-                            "Messages",
-                            "Active_Days",
-                            "Avg Messages / Active Day",
-                            "Share of Total Messages (%)",
-                            "Last 365 Days",
-                            "Last 365 Days Delta (%)",
-                            "YTD",
-                            "YTD Delta (%)",
-                            "Last Full Month",
-                            "Last Full Month Delta (%)",
-                            "First Message",
-                            "Last Message",
-                        ]
-                    ],
+                    trend_summary,
                     width='stretch',
                     hide_index=True,
                 )
+                with st.expander("Show detailed timeline metrics"):
+                    st.dataframe(
+                        timeline_person_stats[
+                            [
+                                "Participant",
+                                "Messages",
+                                "Active_Days",
+                                "Avg Messages / Active Day",
+                                "Share of Total Messages (%)",
+                                "Last 365 Days",
+                                "Last 365 Days Delta (%)",
+                                "YTD",
+                                "YTD Delta (%)",
+                                "Last Full Month",
+                                "Last Full Month Delta (%)",
+                                "First Message",
+                                "Last Message",
+                            ]
+                        ],
+                        width='stretch',
+                        hide_index=True,
+                    )
                 st.markdown("---")
 
                 daily_msgs = df.groupby("date").size().reset_index(name="Messages")
@@ -602,7 +659,6 @@ if uploaded_file is not None:
                     x="date",
                     y="Messages",
                     title="Messages per Day",
-                    line_shape="spline",
                 )
                 fig_time.update_traces(line_color="#FF4B4B")
                 st.plotly_chart(fig_time, width='stretch')
@@ -645,6 +701,50 @@ if uploaded_file is not None:
                     )
                     fig_hours.update_xaxes(tickmode="linear", tick0=0, dtick=1)
                     st.plotly_chart(fig_hours, width='stretch')
+
+                st.markdown("---")
+                st.subheader("Per-Person Activity Patterns")
+
+                day_order = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                day_counts_per_person = (
+                    df.groupby(["sender", "day_name"]).size().reset_index(name="Messages")
+                )
+                day_counts_per_person["day_name"] = pd.Categorical(
+                    day_counts_per_person["day_name"],
+                    categories=day_order,
+                    ordered=True,
+                )
+                day_counts_per_person = day_counts_per_person.sort_values(
+                    ["sender", "Messages", "day_name"],
+                    ascending=[True, False, True],
+                )
+                busiest_day_per_person = day_counts_per_person.drop_duplicates(
+                    subset=["sender"],
+                    keep="first",
+                ).rename(
+                    columns={
+                        "sender": "Participant",
+                        "day_name": "Busiest Day",
+                        "Messages": "Messages on Busiest Day",
+                    }
+                )
+
+                st.markdown("#### Busiest Day for Each Person")
+                st.dataframe(
+                    busiest_day_per_person[
+                        ["Participant", "Busiest Day", "Messages on Busiest Day"]
+                    ],
+                    width='stretch',
+                    hide_index=True,
+                )
 
             with tab_words:
                 st.subheader("Visual Word Cloud")
