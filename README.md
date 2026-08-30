@@ -20,7 +20,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/YourUsername/ConvoMetrics.git
+   git clone https://github.com/MeetThakur/ConvoMetrics.git
    cd ConvoMetrics
    ```
 
