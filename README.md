@@ -4,6 +4,22 @@
 
 Built with a **FastAPI (Python)** backend and a **React + Tailwind CSS + Recharts** frontend, it analyzes your conversation history strictly **in-memory** with **zero persistent storage**.
 
+[![ConvoMetrics launch video: the upload screen, the sample dashboard, a word search, then Hide names and dark mode](docs/images/launch-poster.jpg)](docs/media/convometrics-launch.mp4)
+
+*A 23-second tour of the app. Click the image to open or download the MP4.*
+
+## A look inside
+
+Every screenshot and every frame of the video uses the built-in fictional sample chat (Sam and Alex). No real conversation is shown.
+
+![The dashboard for the sample chat: date filter, message counts and the first-message highlight](docs/images/dashboard.png)
+
+| Upload an export | Search a word |
+| --- | --- |
+| ![The upload screen: drop a WhatsApp .txt, Telegram result.json or a .zip](docs/images/upload.png) | ![Word search for "popcorn": who says it and when](docs/images/word-search.png) |
+| **Messages over time** | **Dark mode** |
+| ![Chart of messages per day across the sample chat](docs/images/activity.png) | ![The same dashboard in dark mode](docs/images/dashboard-dark.png) |
+
 ---
 
 ## Privacy & Architecture Guarantee
@@ -132,6 +148,15 @@ docker run -p 8000:8000 convometrics
 - **Backend:** FastAPI, Pandas, NLTK, Emoji, Uvicorn
 - **Frontend:** React 18, Vite, Tailwind CSS, Recharts
 - **Deployment:** Docker (Multi-stage build)
+
+---
+
+## Credits (launch video)
+
+- Music: "Happy Beats / Business Moves, Vol. 12" by ende.app.
+- Interface sounds: Kenney (CC0).
+- Type: Fraunces and Instrument Sans (SIL Open Font License).
+- Made with HyperFrames and GSAP.
 
 ---
 
