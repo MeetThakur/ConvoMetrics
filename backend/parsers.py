@@ -174,16 +174,12 @@ def preprocess_messages(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
 
-    # Smart dayfirst detection by checking if first token ever exceeds 12
-    sample_timestamps = df["timestamp"].dropna().head(100).astype(str)
-    dayfirst = False
-    for ts in sample_timestamps:
-        parts = re.split(r"[-./]", ts.split()[0])
-        # A 4-digit first token is a year (ISO), which says nothing about day order.
-        if len(parts) >= 2 and parts[0].isdigit() and len(parts[0]) <= 2:
-            if int(parts[0]) > 12:
-                dayfirst = True
-                break
+    # Day-first or month-first? Look at every timestamp, not just the first few: a day above 12 in either
+    # position settles it. (A 4-digit first token is a year, i.e. ISO, which needs no guess.)
+    parts = df["timestamp"].dropna().astype(str).str.extract(r"^(\d{1,2})[-./](\d{1,2})[-./]").astype(float)
+    first_is_day = bool((parts[0] > 12).any())
+    second_is_day = bool((parts[1] > 12).any())
+    dayfirst = first_is_day and not second_is_day
 
     df["timestamp"] = pd.to_datetime(
         df["timestamp"], format="mixed", dayfirst=dayfirst, errors="coerce"
