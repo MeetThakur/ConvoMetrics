@@ -1,0 +1,6 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+pandas>=2.2.0
+nltk>=3.9.0
+emoji>=2.12.0

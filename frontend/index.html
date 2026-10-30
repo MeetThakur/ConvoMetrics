@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23c8401f'/><path d='M8 22V10h4l4 7 4-7h4v12h-3v-7l-4 7h-2l-4-7v7z' fill='%23f5f1ea'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ConvoMetrics</title>
+    <meta name="description" content="Count your WhatsApp and Telegram chats. Processed in memory, never stored." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <script>
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+      else if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
+    } catch (e) {}
+  </script>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Colours are space-separated RGB channels so Tailwind can apply opacity. */
+:root {
+  --paper: 245 241 234;
+  --ink: 23 21 15;
+  --muted: 107 102 91;
+  --rule: 217 210 195;
+  --accent: 200 64 31;
+  --p1: 200 64 31;
+  --p2: 31 58 95;
+  --p3: 201 154 46;
+  --p4: 74 124 89;
+  --p5: 122 92 142;
+  --p6: 138 132 120;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --paper: 24 22 18;
+  --ink: 236 231 220;
+  --muted: 160 154 141;
+  --rule: 60 56 48;
+  --accent: 233 112 80;
+  --p1: 233 112 80;
+  --p2: 108 148 205;
+  --p3: 214 173 74;
+  --p4: 118 173 134;
+  --p5: 166 138 190;
+  --p6: 150 144 130;
+  color-scheme: dark;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-sans antialiased min-h-screen;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    @apply bg-ink text-paper;
+  }
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-accent;
+  }
+}

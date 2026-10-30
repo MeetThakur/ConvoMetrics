@@ -1,0 +1,11 @@
+.git
+.venv
+**/node_modules
+**/dist
+**/.vercel
+**/__pycache__
+.env
+.env.*
+**/.env
+**/.env.*
+chat_samples
