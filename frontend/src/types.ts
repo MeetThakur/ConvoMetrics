@@ -30,6 +30,10 @@ export interface OverviewData {
   participants_count: number;
   date_start: string;
   date_end: string;
+  span_days: number;
+  /** 100 when everyone sends the same amount, 0 when one person sends everything. */
+  balance: number;
+  emojis_total: number;
 }
 
 export interface ParticipantStat {
@@ -157,6 +161,67 @@ export interface Insights {
     busiest_year: { label: string; count: number } | null;
   };
   deleted_messages: number | null;
+  heatmap: {
+    days: string[];
+    rows: number[][];
+    peak: { day: string; hour: number; count: number };
+    weekend_share: number;
+  };
+  reply_distribution: {
+    labels: string[];
+    overall: ReplyBucket[];
+    per_sender: { name: string; buckets: ReplyBucket[]; fastest_share: number }[];
+  };
+  openers: {
+    conversations: number;
+    days: number;
+    per_sender: {
+      name: string;
+      opened: number;
+      closed: number;
+      first_of_day: number;
+      opened_share: number;
+      closed_share: number;
+      first_of_day_share: number;
+    }[];
+  };
+  tone: {
+    name: string;
+    messages: number;
+    laughs: number;
+    laugh_share: number;
+    caps: number;
+    caps_share: number;
+    emoji_only: number;
+  }[];
+  vocabulary: {
+    unique_words_total: number;
+    per_sender: {
+      name: string;
+      words: number;
+      unique_words: number;
+      richness: number;
+      signature: { word: string; count: number; lift: number }[];
+      longest_message: LongMessage | null;
+    }[];
+    longest_message: (LongMessage & { sender: string }) | null;
+  };
+  common_messages: { text: string; count: number; top_sender: string; top_sender_count: number }[];
+  yearly: { year: number; count: number; days: number; top_sender: string; top_share: number }[];
+  streaks: { count_over_week: number; top: { days: number; start: string; end: string }[] };
+}
+
+export interface ReplyBucket {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface LongMessage {
+  chars: number;
+  words: number;
+  date: string;
+  preview: string;
 }
 
 export interface DateRange {

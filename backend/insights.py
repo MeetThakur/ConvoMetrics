@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
+from backend import signals
+
 SESSION_GAP = pd.Timedelta(hours=1)   # quiet time that ends a conversation
 REPLY_CUTOFF = pd.Timedelta(hours=6)  # slower than this is a new conversation, not a reply
 RALLY_GAP = pd.Timedelta(minutes=5)   # max gap between messages in a fast back-and-forth
@@ -326,4 +328,12 @@ def compute_insights(df: pd.DataFrame, deleted: Optional[int] = 0) -> Dict[str, 
         "share_over_time": _share_over_time(df),
         "milestones": _milestones(df),
         "deleted_messages": deleted,
+        "heatmap": signals.heatmap(df),
+        "reply_distribution": signals.reply_distribution(df, gap, REPLY_CUTOFF),
+        "openers": signals.openers_and_closers(df, gap, SESSION_GAP),
+        "tone": signals.tone(df, text),
+        "vocabulary": signals.vocabulary(df, text),
+        "common_messages": signals.common_messages(df, text),
+        "yearly": signals.yearly(df),
+        "streaks": signals.streaks(df),
     }

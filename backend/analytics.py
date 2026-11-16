@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 import pandas as pd
 from backend.insights import compute_insights
 from backend.parsers import COMBINED_STOPWORDS
+from backend.signals import balance_score
 
 
 _PUNCT = str.maketrans("", "", string.punctuation)
@@ -61,6 +62,43 @@ def _insight_awards(ins: Dict[str, Any]) -> List[Dict[str, Any]]:
     if inquisitor:
         awards.append({"title": "The Inquisitor", "recipient": inquisitor["name"],
                        "description": f"Asked {inquisitor['questions']:,} {'question' if inquisitor['questions'] == 1 else 'questions'}"})
+
+    replies = [r for r in ins["responsiveness"]["per_sender"] if r["replies"] >= 10]
+    if len(replies) > 1:
+        quick = min(replies, key=lambda r: r["median_minutes"])
+        awards.append({"title": "Quick Draw", "recipient": quick["name"],
+                       "description": f"Fastest to reply, {quick['median_minutes']:g} min median"})
+
+    comedian = _top(ins["tone"], "laughs", minimum=5)
+    if comedian:
+        awards.append({"title": "The Comedian", "recipient": comedian["name"],
+                       "description": f"Laughed in {comedian['laughs']:,} messages ({comedian['laugh_share']}% of theirs)"})
+
+    shouter = _top(ins["tone"], "caps", minimum=5)
+    if shouter:
+        awards.append({"title": "The Shouter", "recipient": shouter["name"],
+                       "description": f"{shouter['caps']:,} messages in ALL CAPS"})
+
+    openers = ins["openers"]["per_sender"]
+    opener = _top(openers, "opened", minimum=3)
+    if opener and len(openers) > 1:
+        awards.append({"title": "The Opener", "recipient": opener["name"],
+                       "description": f"Started {opener['opened_share']}% of conversations"})
+    closer = _top(openers, "closed", minimum=3)
+    if closer and len(openers) > 1:
+        awards.append({"title": "The Last Word", "recipient": closer["name"],
+                       "description": f"Ended {closer['closed_share']}% of conversations"})
+
+    writers = [r for r in ins["vocabulary"]["per_sender"] if r["words"] >= 300]
+    if len(writers) > 1:
+        wordsmith = max(writers, key=lambda r: r["richness"])
+        awards.append({"title": "The Wordsmith", "recipient": wordsmith["name"],
+                       "description": f"Widest vocabulary, {wordsmith['unique_words']:,} different words"})
+
+    linker = _top(ins["media"]["per_sender"], "links", minimum=5)
+    if linker:
+        awards.append({"title": "The Librarian", "recipient": linker["name"],
+                       "description": f"Shared {linker['links']:,} links"})
 
     return awards
 
@@ -193,6 +231,7 @@ def calculate_chat_analytics(df: pd.DataFrame, platform: str) -> Dict[str, Any]:
             "avg_words": round(p_words / max(msg_count, 1), 1),
         })
     part_stats.sort(key=lambda x: x["messages"], reverse=True)
+    balance = balance_score([p["percentage"] for p in part_stats])
 
     # 5. Activity Over Time
     daily_counts = df.groupby("date").size().reset_index(name="count")
@@ -264,6 +303,9 @@ def calculate_chat_analytics(df: pd.DataFrame, platform: str) -> Dict[str, Any]:
             "participants_count": len(participants),
             "date_start": unique_dates[0] if unique_dates else "",
             "date_end": unique_dates[-1] if unique_dates else "",
+            "span_days": int((df["timestamp"].iloc[-1].normalize() - df["timestamp"].iloc[0].normalize()).days) + 1,
+            "balance": balance,
+            "emojis_total": int(sum(len(e) for e in df["emojis"])),
         },
         "participants": part_stats,
         "insights": insights,
