@@ -1,26 +1,23 @@
 import React from 'react';
 import { OverviewData } from '../types';
+import { StatGrid } from './StatGrid';
+import { formatSpan } from '../lib/format';
 
-export const MetricsOverview: React.FC<{ overview: OverviewData }> = ({ overview }) => {
-  const metrics = [
-    ['Messages', overview.total_messages],
-    ['Words', overview.total_words],
-    ['Characters', overview.total_chars],
-    ['Days with messages', overview.days_talked],
-    ['People', overview.participants_count],
-  ];
-
-  return (
-    <dl className="grid grid-cols-2 sm:grid-cols-5 border-y border-ink mb-12">
-      {metrics.map(([label, value], i) => (
-        <div
-          key={label}
-          className={`py-5 px-4 first:pl-0 ${i > 0 ? 'sm:border-l border-rule' : ''}`}
-        >
-          <dt className="text-xs uppercase tracking-wider text-muted mb-1">{label}</dt>
-          <dd className="font-display text-3xl">{(value as number).toLocaleString()}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-};
+export const MetricsOverview: React.FC<{ overview: OverviewData }> = ({ overview }) => (
+  <StatGrid
+    size="lg"
+    cols={5}
+    className="mb-12"
+    stats={[
+      { label: 'Messages', value: overview.total_messages },
+      { label: 'Words', value: overview.total_words },
+      { label: 'Emoji', value: overview.emojis_total },
+      {
+        label: 'Days with messages',
+        value: overview.days_talked,
+        detail: `of ${overview.span_days.toLocaleString()} (${formatSpan(overview.span_days)})`,
+      },
+      { label: 'People', value: overview.participants_count },
+    ]}
+  />
+);
