@@ -10,6 +10,9 @@ export default {
         rule: 'rgb(var(--rule) / <alpha-value>)',
         accent: 'rgb(var(--accent) / <alpha-value>)',
       },
+      gridTemplateColumns: {
+        24: 'repeat(24, minmax(0, 1fr))',
+      },
       fontFamily: {
         display: ['Fraunces', 'Georgia', 'serif'],
         sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'],

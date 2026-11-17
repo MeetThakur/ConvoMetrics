@@ -13,6 +13,7 @@ from starlette.formparsers import MultiPartException, MultiPartParser
 
 from backend.parsers import detect_and_parse, preprocess_messages
 from backend.analytics import calculate_chat_analytics
+from backend.sample import sample_df
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB in-memory safety limit
 
@@ -162,34 +163,7 @@ def _analyze_upload(contents: bytes, filename: Optional[str], start: Optional[st
 
 
 def _sample_df() -> pd.DataFrame:
-    sample_data = [
-        {"timestamp": "2023-01-01 07:15:00", "sender": "Sam", "message": "Morning Alex! Happy New Year! 🌅☕ Are we grabbing coffee today?"},
-        {"timestamp": "2023-01-01 10:00:00", "sender": "Alex", "message": "Happy New Year! 🎉 Definitely, let's meet at 4 PM at the usual place."},
-        {"timestamp": "2023-01-01 16:05:00", "sender": "Sam", "message": "On my way! Bringing along the new project sketches. 🙌🔥"},
-        {"timestamp": "2023-01-01 23:45:00", "sender": "Alex", "message": "Still thinking about those design ideas! What if we add a dark mode toggle with smooth glassmorphism? 🦉✨"},
-        {"timestamp": "2023-01-02 08:30:00", "sender": "Sam", "message": "That dark mode idea is pure genius. Let's build a prototype this morning! 🚀💻"},
-        {"timestamp": "2023-01-02 18:30:00", "sender": "Alex", "message": "The demo went super well! Everyone loved the smooth animations and data charts. 🍕🍻"},
-        {"timestamp": "2023-01-03 14:15:00", "sender": "Sam", "message": "I just checked the deployment metrics. Zero latency and super high response rate! ❤️❤️❤️"},
-        {"timestamp": "2023-01-03 14:20:00", "sender": "Alex", "message": "I wrote a complete walkthrough guide for the team. Here is the outline of everything we covered today: architecture, caching, and state management. 📜✨"},
-        {"timestamp": "2023-01-04 06:45:00", "sender": "Sam", "message": "Rise and shine! Ready for the new sprint planning kickoff? 🌅🏃‍♂️"},
-        {"timestamp": "2023-01-04 09:02:00", "sender": "Alex", "message": "Morning! Yes, joining the call now."},
-        {"timestamp": "2023-01-05 21:00:00", "sender": "Alex", "message": "Movie night tomorrow? We deserve a break! 🍿"},
-        {"timestamp": "2023-01-05 21:05:00", "sender": "Sam", "message": "I'm in! Let's watch that new sci-fi film. I will bring the popcorn and snacks! 🍿🎉"},
-        {"timestamp": "2023-01-06 19:00:00", "sender": "Sam", "message": "Got the popcorn ready! 🍿🚀 Waiting on your arrival."},
-        {"timestamp": "2023-01-06 19:05:00", "sender": "Alex", "message": "On my way! 🏎️💨 See you in 5 minutes."},
-        {"timestamp": "2023-01-06 19:05:40", "sender": "Sam", "message": "Door's open, come on up"},
-        {"timestamp": "2023-01-06 19:06:10", "sender": "Alex", "message": "Coming up now"},
-        {"timestamp": "2023-01-06 19:06:40", "sender": "Sam", "message": "Grab the snacks on the way!"},
-        {"timestamp": "2023-01-07 01:15:00", "sender": "Alex", "message": "That ending twist blew my mind! 🤯 Definitely one of the best movies we watched this year."},
-        {"timestamp": "2023-01-07 01:16:00", "sender": "Alex", "message": "haha did you see the face on the guy at the end?"},
-        {"timestamp": "2023-01-07 01:16:30", "sender": "Alex", "message": "Also here is the trailer https://www.youtube.com/watch?v=abc123"},
-        {"timestamp": "2023-01-07 01:40:00", "sender": "Sam", "message": "lol yes, who even wrote that?"},
-        {"timestamp": "2023-01-07 01:41:00", "sender": "Sam", "message": "<Media omitted>"},
-        {"timestamp": "2023-01-07 01:41:20", "sender": "Alex", "message": "This message was deleted"},
-        {"timestamp": "2023-01-07 09:10:00", "sender": "Sam", "message": "Reading the review on https://github.com/example/repo/issues/1 now, thoughts?"},
-        {"timestamp": "2023-01-07 09:55:00", "sender": "Alex", "message": "Sleeping in, but yes, will look later!"},
-    ]
-    return preprocess_messages(pd.DataFrame(sample_data))
+    return sample_df()
 
 
 @app.get("/api/sample")
