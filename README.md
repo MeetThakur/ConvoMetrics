@@ -25,7 +25,7 @@ Every screenshot and every frame of the video comes from the real app running on
 ## Privacy & Architecture Guarantee
 
 - **100% In-Memory Processing:** Upload bodies are bounded while streaming, and chat files are parsed from memory buffers.
-- **Zero Storage:** No database, no object store, and no files are ever written to disk (`no open(..., 'w')`).
+- **No Saved Chat Files:** The application uses no database or object store, and does not write uploaded chat exports to disk.
 - **No Retained Chat Sessions:** The server does not cache raw text or DataFrames between requests. Python reclaims request data after it becomes unreachable; immediate memory erasure is not guaranteed. The browser retains the selected file until you reset the app or close the page.
 
 ---
@@ -49,7 +49,7 @@ Every screenshot and every frame of the video comes from the real app running on
 - **Links and media:** photos, videos and stickers, links by site and domain, deleted messages.
 
 **Sharing and privacy**
-- **Hide names** swaps every name for Person A, Person B, and so on, so screenshots are safe to post.
+- **Hide names** swaps every name for Person A, Person B, and so on, for a cleaner view when sharing. Names mentioned in free text can still identify people.
 - **Rename people** (useful when WhatsApp shows phone numbers).
 - **Export** all stats as JSON, a people table as CSV, or messages per day as CSV. Exports follow what is on screen.
 
@@ -103,21 +103,21 @@ Every screenshot and every frame of the video comes from the real app running on
 
 ---
 
-## Deployment Guide
+## Deployment
 
-ConvoMetrics is packaged with a multi-stage `Dockerfile` ready for zero-configuration cloud hosting:
+The hosted app is connected to [this repository](https://github.com/MeetThakur/ConvoMetrics) on `main`.
 
-### 1. Render (Free Web Service)
-1. Fork or push this repository to GitHub.
-2. In the Render Dashboard, click **New +** → **Web Service** and connect this repository.
-3. Select **Docker** as the runtime.
-4. Render will automatically build the frontend, package the Python runtime, and expose the app with free SSL.
+| Component | Host | Configuration |
+| --- | --- | --- |
+| React frontend | [Vercel](https://convometrics-kappa.vercel.app) | Project root `frontend/`; build `npm run build`; output `dist/` |
+| FastAPI backend | [Render](https://convometrics-api.onrender.com/api/health) | Docker build with `backend/Dockerfile`, context at the repository root; health check `/api/health` |
 
-### 2. Railway
-1. Click **New Project** → **Deploy from GitHub repo**.
-2. Railway detects the `Dockerfile` and deploys both the frontend and backend in one container.
+Pushes to `main` automatically redeploy both services. The rewrite in [`frontend/vercel.json`](frontend/vercel.json) forwards `/api/*` to Render. Change its destination when deploying your own backend.
 
-### 3. Docker (Local or VPS)
+The free Render backend sleeps after inactivity; the first analysis may take longer while it starts.
+
+For a single-container deployment, the root Dockerfile includes both the frontend and backend:
+
 ```bash
 docker build -t convometrics .
 docker run -p 8000:8000 convometrics
@@ -147,7 +147,7 @@ docker run -p 8000:8000 convometrics
 ## Tech Stack
 - **Backend:** FastAPI, Pandas, NLTK, Emoji, Uvicorn
 - **Frontend:** React 18, Vite, Tailwind CSS, Recharts
-- **Deployment:** Docker (Multi-stage build)
+- **Deployment:** Vercel frontend + Render Docker backend; optional all-in-one Docker image
 
 ---
 
