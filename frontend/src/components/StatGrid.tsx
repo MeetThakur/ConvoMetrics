@@ -23,7 +23,7 @@ const COLS = { 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4', 5:
 
 /** A ruled row of headline numbers. Numbers count up the first time they scroll into view. */
 export const StatGrid: React.FC<StatGridProps> = ({ stats, cols = 4, size = 'md', className = '' }) => (
-  <dl className={`grid grid-cols-2 ${COLS[cols]} border-y border-ink ${className}`}>
+  <dl className={`stat-row grid grid-cols-2 ${COLS[cols]} border-y border-ink ${className}`}>
     {stats.map((s, i) => (
       <Reveal key={s.label} delay={i} className={`py-5 px-4 first:pl-0 ${i > 0 ? 'sm:border-l border-rule' : ''}`}>
         <dt className="text-xs uppercase tracking-wider text-muted mb-1">{s.label}</dt>

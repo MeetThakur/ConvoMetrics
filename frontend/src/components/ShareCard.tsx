@@ -8,9 +8,9 @@ import { Section } from './Section';
 type Theme = 'ink' | 'paper' | 'accent';
 
 const THEMES: Record<Theme, { bg: string; fg: string; dim: string; hi: string }> = {
-  ink: { bg: '#17150f', fg: '#ece7dc', dim: '#a09a8d', hi: '#e97050' },
-  paper: { bg: '#f5f1ea', fg: '#17150f', dim: '#6b665b', hi: '#c8401f' },
-  accent: { bg: '#c8401f', fg: '#f5f1ea', dim: '#f3c9bb', hi: '#17150f' },
+  ink: { bg: '#141b28', fg: '#f1f4f9', dim: '#a8b3c6', hi: '#ffb77e' },
+  paper: { bg: '#fff7f5', fg: '#392035', dim: '#77586a', hi: '#b82b50' },
+  accent: { bg: '#f8758f', fg: '#392035', dim: '#573047', hi: '#392035' },
 };
 
 interface Line {

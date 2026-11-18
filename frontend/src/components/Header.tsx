@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoadSample, onReset, hasData, 
     <header className="border-b border-rule bg-paper/90 backdrop-blur sticky top-0 z-20">
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <button onClick={onReset} className="font-display text-lg tracking-tight flex items-center gap-2">
-          <span aria-hidden="true" className="inline-block w-4 h-4 bg-accent" />
+          <span aria-hidden="true" className="brand-mark inline-block w-4 h-4" />
           ConvoMetrics
         </button>
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">

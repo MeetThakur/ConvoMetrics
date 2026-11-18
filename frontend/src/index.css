@@ -3,33 +3,40 @@
 @tailwind utilities;
 
 /* Colours are space-separated RGB channels so Tailwind can apply opacity. */
+/* Cherry Studio: blush canvas, plum ink, cherry actions, distinct data hues. */
 :root {
-  --paper: 245 241 234;
-  --ink: 23 21 15;
-  --muted: 107 102 91;
-  --rule: 217 210 195;
-  --accent: 200 64 31;
-  --p1: 200 64 31;
-  --p2: 31 58 95;
-  --p3: 201 154 46;
-  --p4: 74 124 89;
-  --p5: 122 92 142;
-  --p6: 138 132 120;
+  --paper: 255 247 245;
+  --ink: 57 32 53;
+  --muted: 119 88 106;
+  --rule: 232 209 216;
+  --accent: 184 43 80;
+  --signal: 248 117 143;
+  --surface: 255 233 234;
+  --surface-hover: 255 222 225;
+  --p1: 184 43 80;
+  --p2: 36 121 129;
+  --p3: 162 96 33;
+  --p4: 115 82 162;
+  --p5: 59 112 165;
+  --p6: 112 122 49;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --paper: 24 22 18;
-  --ink: 236 231 220;
-  --muted: 160 154 141;
-  --rule: 60 56 48;
-  --accent: 233 112 80;
-  --p1: 233 112 80;
-  --p2: 108 148 205;
-  --p3: 214 173 74;
-  --p4: 118 173 134;
-  --p5: 166 138 190;
-  --p6: 150 144 130;
+  --paper: 20 27 40;
+  --ink: 241 244 249;
+  --muted: 168 179 198;
+  --rule: 54 66 86;
+  --accent: 255 183 126;
+  --signal: 255 183 126;
+  --surface: 29 40 57;
+  --surface-hover: 36 49 68;
+  --p1: 255 183 126;
+  --p2: 117 207 204;
+  --p3: 228 208 138;
+  --p4: 173 181 239;
+  --p5: 144 188 232;
+  --p6: 195 207 132;
   color-scheme: dark;
 }
 
@@ -51,6 +58,33 @@
 }
 
 @layer components {
+  .upload-zone {
+    background: rgb(var(--surface));
+    border: 1px solid rgb(var(--accent) / 0.4);
+    border-radius: 12px;
+  }
+  .upload-zone:hover { background: rgb(var(--surface-hover)); }
+  .upload-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    background: rgb(var(--signal));
+    color: #30283a;
+  }
+  .brand-mark {
+    background: rgb(var(--signal));
+    border-radius: 5px 5px 1px 5px;
+  }
+  .feature-list { border-top: 1px solid rgb(var(--rule)); }
+  .feature-list li { border-bottom: 1px solid rgb(var(--rule)); }
+  .feature-list h2 { color: rgb(var(--accent)); }
+  .stat-row > :first-child dd:first-of-type { color: rgb(var(--accent)); }
+  .stat-row > :nth-child(2) dd:first-of-type { color: rgb(var(--p2)); }
+  .stat-row > :nth-child(3) dd:first-of-type { color: rgb(var(--p3)); }
+
   /* Scroll-in reveal. Elements start slightly low and transparent, then settle. */
   .reveal {
     opacity: 0;
@@ -102,7 +136,7 @@
     right: 0;
     bottom: -1px;
     height: 2px;
-    background: rgb(var(--ink));
+    background: rgb(var(--accent));
     transform: scaleX(0);
     transform-origin: left center;
     transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);

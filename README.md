@@ -6,19 +6,19 @@ Built with a **FastAPI (Python)** backend and a **React + Tailwind CSS + Rechart
 
 [![ConvoMetrics launch video: the upload screen, the sample dashboard, a word search, then Hide names and dark mode](docs/images/launch-poster.jpg)](docs/media/convometrics-launch.mp4)
 
-*A 24-second tour of the app. Click the image to open or download the MP4.*
+*A 24-second launch tour, recorded before the current theme refresh. Click the image to open or download the MP4.*
 
 ## A look inside
 
-Every screenshot and every frame of the video comes from the real app running on a fictional two-person chat (Sam and Alex). No real conversation is shown.
+The screenshots below show the current light and dark themes using the built-in fictional chat (Sam and Alex). The launch video shows an earlier design. No real conversation is shown.
 
-![The dashboard for the fictional chat: 12,251 messages, a date filter and the first-message highlight](docs/images/dashboard.png)
+![The dashboard for the fictional chat: 13,350 messages, a date filter and the first-message highlight](docs/images/dashboard.jpg)
 
 | Upload an export | Search a word |
 | --- | --- |
-| ![The upload screen: drop a WhatsApp .txt, Telegram result.json or a .zip](docs/images/upload.png) | ![Word search for "pizza": who says it and when](docs/images/word-search.png) |
+| ![The upload screen: drop a WhatsApp .txt, Telegram result.json or a .zip](docs/images/upload.jpg) | ![Word search for "pizza": who says it and when](docs/images/word-search.jpg) |
 | **Messages over time** | **Dark mode** |
-| ![Chart of messages per day across the fictional chat](docs/images/activity.png) | ![The same dashboard in dark mode, with names hidden](docs/images/dashboard-dark.png) |
+| ![Chart of messages per day across the fictional chat](docs/images/activity.jpg) | ![The same dashboard in dark mode, with names hidden](docs/images/dashboard-dark.jpg) |
 
 ---
 
@@ -51,10 +51,14 @@ Every screenshot and every frame of the video comes from the real app running on
 **Sharing and privacy**
 - **Hide names** swaps every name for Person A, Person B, and so on, for a cleaner view when sharing. Names mentioned in free text can still identify people.
 - **Rename people** (useful when WhatsApp shows phone numbers).
+- **Share cards:** save a 1080×1350 PNG, copy the image or copy a text summary. Choose ink, paper or accent colours; cards follow hidden and renamed people.
 - **Export** all stats as JSON, a people table as CSV, or messages per day as CSV. Exports follow what is on screen.
 
 **Interface**
-- Light and dark mode (follows your system until you choose).
+- **Light mode:** blush surfaces, plum text and cherry accents.
+- **Dark mode:** midnight-blue surfaces, apricot accents and aqua chart colours.
+- Follows your system theme until you choose; your choice is saved in the browser.
+- Responsive layouts and motion that respects reduced-motion preferences.
 - Group chats: the top five people get their own colour and the rest are grouped as Others.
 - Charts come with a text description and data table for screen readers.
 
