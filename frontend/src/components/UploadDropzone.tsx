@@ -33,11 +33,22 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   const stagger = (i: number) => ({ animationDelay: `${i * 90}ms` });
 
   return (
-    <div className="max-w-2xl pt-14 sm:pt-20">
+    <div className="relative max-w-2xl pt-14 sm:pt-20">
+      <svg aria-hidden="true" className="hidden xl:block absolute left-[calc(100%+40px)] top-32 w-56" viewBox="0 0 224 270" fill="none">
+        <rect x="8" y="10" width="168" height="92" rx="22" fill="rgb(var(--signal))" />
+        <path d="M30 95v24l30-24" fill="rgb(var(--signal))" />
+        <circle cx="52" cy="56" r="7" fill="#392035" />
+        <circle cx="88" cy="56" r="7" fill="#392035" />
+        <circle cx="124" cy="56" r="7" fill="#392035" />
+        <rect x="55" y="131" width="160" height="112" rx="22" fill="#a4dcd5" />
+        <path d="M193 235v25l-30-25" fill="#a4dcd5" />
+        <path d="M82 211v-25m26 25v-46m26 46v-34m26 34v-58m26 58v-40" stroke="#305c61" strokeWidth="12" strokeLinecap="round" />
+        <path d="M193 32v34m-17-17h34" stroke="#f6b580" strokeWidth="7" strokeLinecap="round" />
+      </svg>
       <p className="rise-in text-xs uppercase tracking-[0.2em] text-muted mb-4" style={stagger(0)}>
         WhatsApp · Telegram · in your browser
       </p>
-      <h1 className="rise-in font-display text-5xl sm:text-7xl leading-[1.02] tracking-tight mb-6" style={stagger(1)}>
+      <h1 className="rise-in font-sans font-semibold text-6xl sm:text-8xl leading-[0.98] tracking-[-0.065em] mb-6" style={stagger(1)}>
         Your chat,
         <br />
         <span className="text-accent">counted.</span>
@@ -72,12 +83,12 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         }}
         onClick={() => !isLoading && inputRef.current?.click()}
         style={stagger(3)}
-        className={`rise-in relative px-6 py-12 transition-all duration-300 ${
+        className={`upload-zone rise-in relative px-7 py-7 transition-all duration-300 ${
           isLoading ? 'cursor-progress' : 'cursor-pointer'
         } ${
           isDragging
-            ? 'marching bg-accent/5 scale-[1.01]'
-            : 'border border-dashed border-ink hover:bg-ink/[0.03] hover:border-accent'
+            ? 'marching scale-[1.01]'
+            : 'hover:border-accent'
         }`}
       >
         <input
@@ -109,7 +120,12 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
           </div>
         ) : (
           <>
-            <p className="font-display text-2xl mb-1">
+            <span className="upload-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5" />
+              </svg>
+            </span>
+            <p className="font-sans font-semibold text-xl mb-1">
               {isLoading ? (
                 <span className="blink">Loading…</span>
               ) : isDragging ? (
@@ -137,9 +153,9 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         — two fictional friends, two years, thirteen thousand messages.
       </p>
 
-      <ul className="rise-in mt-16 grid sm:grid-cols-2 gap-px bg-rule border border-rule" style={stagger(5)}>
+      <ul className="feature-list rise-in mt-12 grid sm:grid-cols-2 gap-x-8" style={stagger(5)}>
         {FEATURES.map(([title, body]) => (
-          <li key={title} className="bg-paper p-5">
+          <li key={title} className="py-6">
             <h2 className="font-display text-lg mb-1">{title}</h2>
             <p className="text-sm text-muted leading-relaxed">{body}</p>
           </li>
