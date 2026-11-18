@@ -10,15 +10,17 @@ Built with a **FastAPI (Python)** backend and a **React + Tailwind CSS + Rechart
 
 ## A look inside
 
-The screenshots below show the current light and dark themes using the built-in fictional chat (Sam and Alex). The launch video shows an earlier design. No real conversation is shown.
+The screenshots below show the current light theme using the built-in fictional chat (Sam and Alex). The launch video shows an earlier design. No real conversation is shown.
 
 ![The dashboard for the fictional chat: 13,350 messages, a date filter and the first-message highlight](docs/images/dashboard.jpg)
 
 | Upload an export | Search a word |
 | --- | --- |
 | ![The upload screen: drop a WhatsApp .txt, Telegram result.json or a .zip](docs/images/upload.jpg) | ![Word search for "pizza": who says it and when](docs/images/word-search.jpg) |
-| **Messages over time** | **Dark mode** |
-| ![Chart of messages per day across the fictional chat](docs/images/activity.jpg) | ![The same dashboard in dark mode, with names hidden](docs/images/dashboard-dark.jpg) |
+| **Messages over time** | **Who does the talking** |
+| ![Chart of messages per day across the fictional chat](docs/images/activity.jpg) | ![Participant message shares, balance score and share over time](docs/images/people.jpg) |
+| **Weekly activity patterns** | **Made to share** |
+| ![Weekday and hour heatmap showing when the chat is busiest](docs/images/heatmap.jpg) | ![A share card summarizing the fictional chat](docs/images/share-card.jpg) |
 
 ---
 
