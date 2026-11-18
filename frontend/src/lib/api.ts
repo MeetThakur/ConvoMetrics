@@ -1,4 +1,5 @@
-import { ChatAnalytics } from '../types';
+import type { ChatAnalytics } from '../types';
+import { HttpError, withRateLimitRetry } from './request.ts';
 
 export const MAX_FILE_MB = 50;
 const ACCEPTED = ['.txt', '.json', '.zip'];
@@ -9,7 +10,7 @@ export interface RangeParams {
 }
 
 export interface Progress {
-  phase: 'uploading' | 'analysing';
+  phase: 'uploading' | 'analysing' | 'retrying';
   pct: number;
   name: string;
 }
@@ -33,7 +34,7 @@ export function analyzeFile(
   range: RangeParams,
   onProgress: (p: Progress) => void
 ): Promise<ChatAnalytics> {
-  return new Promise((resolve, reject) => {
+  return withRateLimitRetry(() => new Promise<ChatAnalytics>((resolve, reject) => {
     const form = new FormData();
     form.append('file', file);
     if (range.start) form.append('start', range.start);
@@ -56,18 +57,21 @@ export function analyzeFile(
         // non-JSON error page
       }
       if (xhr.status >= 200 && xhr.status < 300 && body) resolve(body);
-      else reject(new Error(body?.detail || `The server returned an error (${xhr.status}).`));
+      else reject(new HttpError(xhr.status, body?.detail, xhr.getResponseHeader('Retry-After')));
     };
     xhr.send(form);
-  });
+  }), () => onProgress({ phase: 'retrying', pct: 0, name: file.name }));
 }
 
-export async function fetchSample(range: RangeParams): Promise<ChatAnalytics> {
+export async function fetchSample(range: RangeParams, onProgress?: (p: Progress) => void): Promise<ChatAnalytics> {
   const q = new URLSearchParams();
   if (range.start) q.set('start', range.start);
   if (range.end) q.set('end', range.end);
-  const res = await fetch(`/api/sample?${q}`);
-  const body = await res.json().catch(() => null);
-  if (!res.ok || !body) throw new Error(body?.detail || 'Could not load the sample chat.');
-  return body;
+  return withRateLimitRetry(async () => {
+    const res = await fetch(`/api/sample?${q}`);
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new HttpError(res.status, body?.detail, res.headers.get('Retry-After'));
+    if (!body) throw new Error('Could not load the sample chat.');
+    return body;
+  }, () => onProgress?.({ phase: 'retrying', pct: 0, name: 'Sample chat' }));
 }

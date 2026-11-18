@@ -116,7 +116,7 @@ export const App: React.FC = () => {
     setProgress(null);
     try {
       const result =
-        src.kind === 'file' ? await analyzeFile(src.file, range, setProgress) : await fetchSample(range);
+        src.kind === 'file' ? await analyzeFile(src.file, range, setProgress) : await fetchSample(range, setProgress);
       setData(result);
       setSource(src);
       if (!data) window.scrollTo({ top: 0 });

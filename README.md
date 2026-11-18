@@ -115,7 +115,7 @@ The hosted app is connected to [this repository](https://github.com/MeetThakur/C
 
 | Component | Host | Configuration |
 | --- | --- | --- |
-| React frontend | [Vercel](https://convometrics-kappa.vercel.app) | Project root `frontend/`; build `npm run build`; output `dist/` |
+| React frontend | [Vercel](https://convometricsapp.vercel.app) | Project root `frontend/`; build `npm run build`; output `dist/` |
 | FastAPI backend | [Render](https://convometrics-api.onrender.com/api/health) | Docker build with `backend/Dockerfile`, context at the repository root; health check `/api/health` |
 
 Pushes to `main` automatically redeploy both services. The rewrite in [`frontend/vercel.json`](frontend/vercel.json) forwards `/api/*` to Render. Change its destination when deploying your own backend.

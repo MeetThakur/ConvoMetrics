@@ -106,7 +106,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         {isLoading && progress ? (
           <div aria-live="polite" className="fade-in">
             <p className="font-display text-2xl mb-1">
-              {progress.phase === 'uploading' ? `Reading ${progress.pct}%` : 'Counting messages…'}
+              {progress.phase === 'retrying' ? 'Server busy — retrying shortly…' : progress.phase === 'uploading' ? `Reading ${progress.pct}%` : 'Counting messages…'}
             </p>
             <p className="text-sm text-muted truncate mb-4">{progress.name}</p>
             <div className="h-1 bg-rule/60 overflow-hidden">
