@@ -70,7 +70,7 @@ const ReplySpread: React.FC<{ dist: Insights['reply_distribution'] }> = ({ dist 
   );
 };
 
-export const ConversationsTab: React.FC<{ insights: Insights; platform: string }> = ({ insights, platform }) => {
+export const ConversationsTab: React.FC<{ insights: Insights }> = ({ insights }) => {
   const { label, color } = useNames();
   const { conversations: c, responsiveness: r, double_texting: dt, rallies: rallyData, rally_gap_minutes: gapMin } = insights;
   const rallies = rallyData.longest;
@@ -79,27 +79,26 @@ export const ConversationsTab: React.FC<{ insights: Insights; platform: string }
 
   return (
     <>
-      {platform.includes('WhatsApp') && (
-        <p className="-mt-2 mb-8 text-sm text-muted max-w-2xl">
-          WhatsApp exports record time only to the minute, so reply times and rally lengths below can be off by up
-          to a minute, and messages sent in the same minute count as 0 minutes apart.
-        </p>
-      )}
-
       <StatGrid
         cols={4}
         className="mb-12"
         stats={[
           { label: 'Conversations', value: c.total, detail: 'after an hour of quiet, a new one starts' },
           { label: 'Typical length', value: formatDuration(c.avg_minutes) },
-          { label: 'Median reply', value: formatDuration(r.median_minutes), detail: 'across everyone' },
+          { label: 'Median reply', value: r.median_minutes === null ? 'Unavailable' : formatDuration(r.median_minutes), detail: 'measured replies across everyone' },
           { label: 'Longest silence', value: c.longest_silence.days, decimals: 1, unit: 'days', detail: c.longest_silence.ended ? `ended ${c.longest_silence.ended}` : undefined },
         ]}
       />
 
       <Section title="Reply speed" note="Time to answer the other person. Gaps over 6 hours don't count.">
+        {r.same_timestamp > 0 && (
+          <p className="mb-4 text-sm text-muted">
+            {r.same_timestamp.toLocaleString()} {r.same_timestamp === 1 ? 'reply shares' : 'replies share'} a timestamp with the preceding message.
+            Their exact timing is unknown, so they appear separately in the breakdown below.
+          </p>
+        )}
         {r.per_sender.length === 0 ? (
-          <p className="text-muted">Not enough back-and-forth to measure.</p>
+          <p className="text-muted">No measurable reply gaps.</p>
         ) : (
           <Bars
             items={r.per_sender.map((p) => ({
@@ -107,7 +106,7 @@ export const ConversationsTab: React.FC<{ insights: Insights; platform: string }
               value: p.median_minutes,
               display: formatDuration(p.median_minutes),
               color: color(p.name),
-              detail: `median · ${formatDuration(p.avg_minutes)} average · ${p.replies.toLocaleString()} replies`,
+              detail: `median · ${formatDuration(p.avg_minutes)} average · ${p.replies.toLocaleString()} measured replies`,
             }))}
           />
         )}

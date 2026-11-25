@@ -66,8 +66,10 @@ def _insight_awards(ins: Dict[str, Any]) -> List[Dict[str, Any]]:
     replies = [r for r in ins["responsiveness"]["per_sender"] if r["replies"] >= 10]
     if len(replies) > 1:
         quick = min(replies, key=lambda r: r["median_minutes"])
+        median = quick["median_minutes"]
+        duration = "under a minute" if median < 1 else f"{median:.1f}".rstrip("0").rstrip(".") + " min"
         awards.append({"title": "Quick Draw", "recipient": quick["name"],
-                       "description": f"Fastest to reply, {quick['median_minutes']:g} min median"})
+                       "description": f"Fastest measured replies, median {duration}"})
 
     comedian = _top(ins["tone"], "laughs", minimum=5)
     if comedian:

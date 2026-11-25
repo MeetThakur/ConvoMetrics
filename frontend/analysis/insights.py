@@ -83,24 +83,23 @@ def _double_texting(df: pd.DataFrame) -> List[Dict[str, Any]]:
     ]
 
 
-def _responsiveness(df: pd.DataFrame, gap: pd.Series) -> Dict[str, Any]:
-    is_reply = (df["sender"] != df["sender"].shift()) & gap.notna() & (gap <= REPLY_CUTOFF)
-    minutes = _minutes(gap[is_reply])
-    senders = df["sender"][is_reply]
+def _responsiveness(replies: pd.Series, senders: pd.Series) -> Dict[str, Any]:
+    minutes = replies[replies > 0]
 
     per_sender = [
         {
             "name": str(name),
-            "median_minutes": round(float(vals.median()), 1),
-            "avg_minutes": round(float(vals.mean()), 1),
+            "median_minutes": float(vals.median()),
+            "avg_minutes": float(vals.mean()),
             "replies": int(len(vals)),
         }
         for name, vals in minutes.groupby(senders)
     ]
     per_sender.sort(key=lambda r: r["median_minutes"])
     return {
-        "median_minutes": round(float(minutes.median()), 1) if len(minutes) else 0.0,
-        "avg_minutes": round(float(minutes.mean()), 1) if len(minutes) else 0.0,
+        "median_minutes": float(minutes.median()) if len(minutes) else None,
+        "avg_minutes": float(minutes.mean()) if len(minutes) else None,
+        "same_timestamp": int((replies == 0).sum()),
         "per_sender": per_sender,
     }
 
@@ -313,11 +312,14 @@ def _milestones(df: pd.DataFrame) -> Dict[str, Any]:
 def compute_insights(df: pd.DataFrame, deleted: Optional[int] = 0) -> Dict[str, Any]:
     """`df` must be sorted by timestamp with a clean RangeIndex."""
     gap = df["timestamp"].diff()
+    is_reply = (df["sender"] != df["sender"].shift()) & gap.notna() & (gap <= REPLY_CUTOFF)
+    replies = _minutes(gap[is_reply])
+    reply_senders = df.loc[is_reply, "sender"]
     text = df["message"].astype(str).where(~df["is_media"], "")
     return {
         "conversations": _conversations(df, gap),
         "double_texting": _double_texting(df),
-        "responsiveness": _responsiveness(df, gap),
+        "responsiveness": _responsiveness(replies, reply_senders),
         "rallies": _rallies(df, gap),
         "rally_gap_minutes": int(RALLY_GAP.total_seconds() // 60),
         "texting_hours": _texting_hours(df),
@@ -329,7 +331,7 @@ def compute_insights(df: pd.DataFrame, deleted: Optional[int] = 0) -> Dict[str, 
         "milestones": _milestones(df),
         "deleted_messages": deleted,
         "heatmap": signals.heatmap(df),
-        "reply_distribution": signals.reply_distribution(df, gap, REPLY_CUTOFF),
+        "reply_distribution": signals.reply_distribution(replies, reply_senders),
         "openers": signals.openers_and_closers(df, gap, SESSION_GAP),
         "tone": signals.tone(df, text),
         "vocabulary": signals.vocabulary(df, text),

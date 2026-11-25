@@ -229,7 +229,7 @@ export const App: React.FC = () => {
               <ActivityTab timeline={data.timeline} insights={data.insights} />
 
               <GroupHeading id="conversations">Conversations</GroupHeading>
-              <ConversationsTab insights={data.insights} platform={data.platform} />
+              <ConversationsTab insights={data.insights} />
 
               <GroupHeading id="style">Style</GroupHeading>
               <StyleTab style={data.insights.style} tone={data.insights.tone} vocabulary={data.insights.vocabulary} />

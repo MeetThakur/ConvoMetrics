@@ -16,6 +16,7 @@ WORD_RE = re.compile(r"[a-z']+")
 TOKEN_STRIP = str.maketrans("", "", "!\"#$%&()*+,-./:;<=>?@[\\]^_`{|}~")
 
 # Reply-time buckets: upper bound in minutes, label. None is "everything else under the reply cutoff".
+SAME_TIMESTAMP = "Same timestamp"
 REPLY_BUCKETS = [
     (1, "Under a minute"),
     (5, "1–5 min"),
@@ -41,28 +42,30 @@ def heatmap(df: pd.DataFrame) -> Dict[str, Any]:
     }
 
 
-def reply_distribution(df: pd.DataFrame, gap: pd.Series, reply_cutoff: pd.Timedelta) -> Dict[str, Any]:
+def reply_distribution(minutes: pd.Series, senders: pd.Series) -> Dict[str, Any]:
     """How reply times spread out, overall and per person."""
-    is_reply = (df["sender"] != df["sender"].shift()) & gap.notna() & (gap <= reply_cutoff)
-    minutes = gap[is_reply].dt.total_seconds() / 60
-    senders = df["sender"][is_reply]
 
     def bucketize(vals: pd.Series) -> List[Dict[str, Any]]:
-        out, lower = [], 0.0
+        same_timestamp = int((vals == 0).sum())
+        out = [{"label": SAME_TIMESTAMP, "count": same_timestamp,
+                "percentage": round(same_timestamp / max(len(vals), 1) * 100, 1)}]
+        measured = vals[vals > 0]
+        lower = 0.0
         for upper, label in REPLY_BUCKETS:
             if upper is None:
-                n = int((vals >= lower).sum())
+                n = int((measured >= lower).sum())
             else:
-                n = int(((vals >= lower) & (vals < upper)).sum())
+                n = int(((measured >= lower) & (measured < upper)).sum())
                 lower = float(upper)
             out.append({"label": label, "count": n, "percentage": round(n / max(len(vals), 1) * 100, 1)})
         return out
 
     return {
-        "labels": [label for _, label in REPLY_BUCKETS],
+        "labels": [SAME_TIMESTAMP, *[label for _, label in REPLY_BUCKETS]],
         "overall": bucketize(minutes),
         "per_sender": [
-            {"name": str(name), "buckets": bucketize(vals), "fastest_share": round(float((vals < 1).mean()) * 100, 1)}
+            {"name": str(name), "buckets": bucketize(vals),
+             "fastest_share": round(float(((vals > 0) & (vals < 1)).mean()) * 100, 1)}
             for name, vals in minutes.groupby(senders)
         ],
     }

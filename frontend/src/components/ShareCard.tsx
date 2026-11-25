@@ -23,7 +23,7 @@ interface Line {
 export function summaryLines(data: ChatAnalytics, label: (n: string) => string): Line[] {
   const { overview: o, wrapped: w, insights: i, participants } = data;
   const top = participants[0];
-  const quick = [...i.responsiveness.per_sender].sort((a, b) => a.median_minutes - b.median_minutes)[0];
+  const quick = i.responsiveness.per_sender.find((person) => person.replies >= 10);
   const opener = [...i.openers.per_sender].sort((a, b) => b.opened - a.opened)[0];
   const emoji = data.emojis.overall[0];
   const lines: Line[] = [
@@ -36,8 +36,8 @@ export function summaryLines(data: ChatAnalytics, label: (n: string) => string):
   if (participants.length > 1 && top) {
     lines.push({ label: 'Talks most', value: label(top.name), detail: `${top.percentage}% of messages` });
   }
-  if (quick && quick.replies >= 10) {
-    lines.push({ label: 'Fastest reply', value: label(quick.name), detail: `${formatDuration(quick.median_minutes)} median` });
+  if (quick) {
+    lines.push({ label: 'Fastest measured reply', value: label(quick.name), detail: `${formatDuration(quick.median_minutes)} median` });
   }
   if (opener && participants.length > 1) {
     lines.push({ label: 'Starts the chat', value: label(opener.name), detail: `${opener.opened_share}% of conversations` });

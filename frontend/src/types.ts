@@ -116,8 +116,9 @@ export interface Insights {
   };
   double_texting: { name: string; run: number; date: string }[];
   responsiveness: {
-    median_minutes: number;
-    avg_minutes: number;
+    median_minutes: number | null;
+    avg_minutes: number | null;
+    same_timestamp: number;
     per_sender: { name: string; median_minutes: number; avg_minutes: number; replies: number }[];
   };
   rally_gap_minutes: number;

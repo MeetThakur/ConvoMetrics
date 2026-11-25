@@ -40,19 +40,26 @@ test('analyzes a local export and a sample without sending chat data', { timeout
       '12/31/2023, 10:00 - Ivy: coffee 👍🏽',
       '01/20/2024, 11:00 - Jules: coffee?',
       '01/20/2024, 11:01 - Ivy: yes!',
+      '01/20/2024, 11:01 - Jules: alright',
     ].join('\n')),
   });
   await page.getByRole('heading', { name: 'Ivy & Jules', exact: true }).waitFor();
   const full = await exportedStats(page);
   assert.equal(full.platform, 'WhatsApp');
-  assert.equal(full.overview.total_messages, 3);
+  assert.equal(full.overview.total_messages, 4);
   assert.equal(full.emojis.overall[0].emoji, '👍🏽');
+  assert.equal(full.insights.responsiveness.median_minutes, 1);
+  assert.equal(full.insights.responsiveness.avg_minutes, 1);
+  assert.equal(full.insights.responsiveness.same_timestamp, 1);
+  assert.deepEqual(full.insights.reply_distribution.overall[0],
+    { label: 'Same timestamp', count: 1, percentage: 50 });
+  await page.getByText(/1 reply shares a timestamp/).waitFor();
 
   await context.setOffline(true);
   await page.getByRole('button', { name: '2024', exact: true }).click();
   await page.getByRole('button', { name: 'Apply', exact: true }).waitFor();
   const filtered = await exportedStats(page);
-  assert.equal(filtered.overview.total_messages, 2);
+  assert.equal(filtered.overview.total_messages, 3);
   assert.equal(filtered.range.start, '2024-01-01');
 
   await page.getByRole('textbox', { name: 'Word to search for' }).fill('coffee');
