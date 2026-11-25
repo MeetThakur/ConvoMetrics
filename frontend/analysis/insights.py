@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from backend import signals
+from . import signals
 
 SESSION_GAP = pd.Timedelta(hours=1)   # quiet time that ends a conversation
 REPLY_CUTOFF = pd.Timedelta(hours=6)  # slower than this is a new conversation, not a reply

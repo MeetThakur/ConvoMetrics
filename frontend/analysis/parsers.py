@@ -3,19 +3,13 @@ import json
 import re
 import string
 import zipfile
+from pathlib import Path
 from typing import Optional, Tuple
 import emoji
-import nltk
-from nltk.corpus import stopwords
 import pandas as pd
 
-# Initialize NLTK stopwords
-try:
-    nltk.data.find("corpora/stopwords")
-except LookupError:
-    nltk.download("stopwords", quiet=True)
-
-DEFAULT_STOPWORDS = set(stopwords.words("english"))
+# The English list from NLTK's stopwords corpus, bundled for offline analysis.
+DEFAULT_STOPWORDS = set(Path(__file__).with_name("english-stopwords.txt").read_text(encoding="utf-8").splitlines())
 CHAT_ARTIFACTS = {
     "media", "omitted", "deleted", "image", "video", "sticker", "gif",
     "voice", "call", "missed", "message", "audio", "attached", "null",

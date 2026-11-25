@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Progress } from '../lib/api';
+import { Progress } from '../lib/localAnalysis';
 
 interface UploadDropzoneProps {
   onFileUpload: (file: File) => void;
@@ -55,7 +55,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
       </h1>
       <p className="rise-in text-lg text-muted leading-relaxed mb-10 max-w-xl" style={stagger(2)}>
         Drop in a WhatsApp or Telegram export and get message counts, streaks, busiest hours, reply speed,
-        and the words each of you leans on. The file is read in memory and never saved.
+        and the words each of you leans on. Your export stays on your device.
       </p>
 
       {error && (
@@ -106,16 +106,11 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         {isLoading && progress ? (
           <div aria-live="polite" className="fade-in">
             <p className="font-display text-2xl mb-1">
-              {progress.phase === 'retrying' ? 'Server busy — retrying shortly…' : progress.phase === 'uploading' ? `Reading ${progress.pct}%` : 'Counting messages…'}
+              {progress.phase === 'preparing' ? 'Loading the analysis engine…' : 'Analyzing on your device…'}
             </p>
             <p className="text-sm text-muted truncate mb-4">{progress.name}</p>
             <div className="h-1 bg-rule/60 overflow-hidden">
-              <div
-                className={`h-full transition-[width] duration-300 ${
-                  progress.phase === 'analysing' ? 'shimmer' : 'bg-accent'
-                }`}
-                style={{ width: `${progress.pct}%` }}
-              />
+              <div className="w-full h-full shimmer" />
             </div>
           </div>
         ) : (
@@ -171,7 +166,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
           <ol className="list-decimal list-inside text-muted space-y-1">
             <li>Open the chat, tap the contact or group name.</li>
             <li>Choose Export Chat, then Without Media.</li>
-            <li>Upload the .txt or .zip you get, no need to unzip it.</li>
+            <li>Open the .txt or .zip in ConvoMetrics.</li>
           </ol>
         </div>
         <div>
@@ -179,7 +174,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
           <ol className="list-decimal list-inside text-muted space-y-1">
             <li>In Telegram Desktop, open the chat menu (⋮).</li>
             <li>Choose Export chat history and untick media.</li>
-            <li>Pick Machine-readable JSON and upload result.json.</li>
+            <li>Pick Machine-readable JSON and open result.json here.</li>
           </ol>
         </div>
       </div>

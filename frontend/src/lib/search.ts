@@ -1,6 +1,6 @@
 import { SearchResult, WordIndex } from '../types';
 
-/** Mirrors backend tokenize(): lowercase, drop ASCII punctuation. */
+/** Mirrors the Python engine's tokenizer: lowercase, drop ASCII punctuation. */
 export function normalise(term: string): string {
   return term.toLowerCase().replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, '').trim();
 }

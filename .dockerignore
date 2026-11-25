@@ -2,6 +2,7 @@
 .venv
 **/node_modules
 **/dist
+frontend/public/analysis
 **/.vercel
 **/__pycache__
 .env

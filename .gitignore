@@ -26,6 +26,7 @@ wheels/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/public/analysis/
 
 # Streamlit legacy
 .streamlit/secrets.toml

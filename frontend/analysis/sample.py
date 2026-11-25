@@ -10,7 +10,7 @@ from typing import List
 
 import pandas as pd
 
-from backend.parsers import preprocess_messages
+from .parsers import preprocess_messages
 
 PEOPLE = ["Sam", "Alex"]
 START = datetime(2023, 1, 1, 9, 12)

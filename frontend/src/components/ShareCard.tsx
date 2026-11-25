@@ -66,11 +66,11 @@ async function renderPng(data: ChatAnalytics, label: (n: string) => string, them
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   try {
-    await Promise.all([document.fonts.load('600 96px Fraunces'), document.fonts.load('500 28px "Instrument Sans"')]);
+    await Promise.all([document.fonts.load('600 96px "Fraunces Variable"'), document.fonts.load('500 28px "Instrument Sans"')]);
   } catch {
     // fall back to system fonts
   }
-  const serif = 'Fraunces, Georgia, serif';
+  const serif = '"Fraunces Variable", Georgia, serif';
   const sans = '"Instrument Sans", system-ui, sans-serif';
 
   ctx.fillStyle = t.bg;

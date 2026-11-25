@@ -28,7 +28,7 @@ export const WordSearcherTab: React.FC<WordSearcherTabProps> = ({ index, initial
     }
   }, [initialQuery]);
 
-  // The index lives in the browser, so searching is instant and nothing is re-uploaded.
+  // Search the index built during local analysis.
   const outcome = useMemo(() => (submitted ? searchIndex(index, submitted) : null), [index, submitted]);
   const result = outcome?.kind === 'result' ? outcome.result : null;
   const top = result?.by_sender[0];

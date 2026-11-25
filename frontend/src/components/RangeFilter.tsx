@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DateRange } from '../types';
-import { RangeParams } from '../lib/api';
+import { RangeParams } from '../lib/localAnalysis';
 
 interface RangeFilterProps {
   range: DateRange;

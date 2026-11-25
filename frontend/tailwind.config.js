@@ -14,7 +14,7 @@ export default {
         24: 'repeat(24, minmax(0, 1fr))',
       },
       fontFamily: {
-        display: ['Fraunces', 'Georgia', 'serif'],
+        display: ['"Fraunces Variable"', 'Georgia', 'serif'],
         sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'],
       },
     },

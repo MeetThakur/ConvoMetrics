@@ -2,7 +2,7 @@
 
 **ConvoMetrics** turns a WhatsApp or Telegram export into message counts, streaks, activity charts, word and emoji stats.
 
-Built with a **FastAPI (Python)** backend and a **React + Tailwind CSS + Recharts** frontend, it analyzes your conversation history strictly **in-memory** with **zero persistent storage**.
+ConvoMetrics runs Python analytics in a browser Web Worker using Pyodide. The app is a static site, and chat files and results stay on your device.
 
 [![ConvoMetrics launch video: the upload screen, the sample dashboard, a word search, then Hide names and dark mode](docs/images/launch-poster.jpg)](docs/media/convometrics-launch.mp4)
 
@@ -26,9 +26,9 @@ The screenshots below show the current light theme using the built-in fictional 
 
 ## Privacy & Architecture Guarantee
 
-- **100% In-Memory Processing:** Upload bodies are bounded while streaming, and chat files are parsed from memory buffers.
-- **No Saved Chat Files:** The application uses no database or object store, and does not write uploaded chat exports to disk.
-- **No Retained Chat Sessions:** The server does not cache raw text or DataFrames between requests. Python reclaims request data after it becomes unreachable; immediate memory erasure is not guaranteed. The browser retains the selected file until you reset the app or close the page.
+- **On-device analysis.** The browser reads and decompresses your export, calculates analytics, and builds the word-search index locally.
+- **In-memory sessions.** Starting a new file or closing the page releases the selected file, calculated results, and analysis worker. Downloads and clipboard actions happen when you choose them.
+- **Static assets.** The first analysis loads the Python runtime and packages from the same origin as the app. Once the worker is loaded, analysis and date filtering can run offline in that session.
 
 ---
 
@@ -36,7 +36,7 @@ The screenshots below show the current light theme using the built-in fictional 
 
 **Input**
 - WhatsApp `.txt`, Telegram `result.json`, or a `.zip` of either (unzipped in memory, no need to extract first).
-- Upload progress, and quick checks on file type and size (50 MB limit) before anything is sent.
+- File type and size checks, with a 50 MB limit for the file and the chat export inside a ZIP.
 - A date filter: all time, one calendar year, or any custom range, re-analysed from the same file.
 - A built-in sample chat to try the app without an export.
 
@@ -47,7 +47,7 @@ The screenshots below show the current light theme using the built-in fictional 
 - **Conversations:** reply speed per person, how many conversations there were and how long, longest silence, longest run of messages with no reply.
 - **Style:** questions, exclamations and late-night messages per person.
 - **Words and emoji:** most-used words (English and Hinglish filler removed) and emoji, per person or overall.
-- **Word search:** who says a word, and when. The search runs in your browser against an index returned with the first analysis, so nothing is re-uploaded.
+- **Word search:** who says a word, and when. The browser searches the index built during analysis.
 - **Links and media:** photos, videos and stickers, links by site and domain, deleted messages.
 
 **Sharing and privacy**
@@ -66,67 +66,29 @@ The screenshots below show the current light theme using the built-in fictional 
 
 ---
 
-## Local Development & Running
+## Local development
 
-### Option 1: Run the Complete App (All-in-One)
+Use Node.js 22 or newer.
 
-1. **Install backend dependencies:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r backend/requirements.txt
-   ```
+```bash
+cd frontend
+npm ci
+npm run dev
+```
 
-2. **Build the React frontend:**
-   ```bash
-   cd frontend
-   npm install
-   npm run build
-   cd ..
-   ```
+Open `http://localhost:5173`. The dev and build scripts prepare pinned WebAssembly assets and check package checksums.
 
-3. **Start the server:**
-   ```bash
-   uvicorn backend.main:app --port 8000
-   ```
-   Open `http://localhost:8000` in your browser. FastAPI automatically serves the built React frontend and API endpoints!
-
----
-
-### Option 2: Separate Dev Servers (Live Hot Reloading)
-
-1. **Start FastAPI backend:**
-   ```bash
-   uvicorn backend.main:app --reload --port 8000
-   ```
-
-2. **Start Vite React frontend:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   Open `http://localhost:5173`. Vite proxies `/api` requests to `http://localhost:8000`.
-
----
+Run the browser privacy test with `npx playwright install chromium` followed by `npm run test:browser`.
 
 ## Deployment
 
-The hosted app is connected to [this repository](https://github.com/MeetThakur/ConvoMetrics) on `main`.
+Build with `npm run build` from `frontend/` and serve the entire `dist/` directory on a static host. The [Vercel project](https://convometricsapp.vercel.app) uses `frontend/` as its root.
 
-| Component | Host | Configuration |
-| --- | --- | --- |
-| React frontend | [Vercel](https://convometricsapp.vercel.app) | Project root `frontend/`; build `npm run build`; output `dist/` |
-| FastAPI backend | [Render](https://convometrics-api.onrender.com/api/health) | Docker build with `backend/Dockerfile`, context at the repository root; health check `/api/health` |
-
-Pushes to `main` automatically redeploy both services. The rewrite in [`frontend/vercel.json`](frontend/vercel.json) forwards `/api/*` to Render. Change its destination when deploying your own backend.
-
-The free Render backend sleeps after inactivity; the first analysis may take longer while it starts.
-
-For a single-container deployment, the root Dockerfile includes both the frontend and backend:
+The Docker image serves the same static site.
 
 ```bash
 docker build -t convometrics .
-docker run -p 8000:8000 convometrics
+docker run --rm -p 8000:80 convometrics
 ```
 
 ---
@@ -139,21 +101,21 @@ docker run -p 8000:8000 convometrics
 3. Click the three dots (top-right corner) and select **Export chat history**.
 4. Uncheck media files to keep export file lightweight.
 5. Under "Format", select **Machine-readable JSON** (`result.json`).
-6. Upload the file to ConvoMetrics.
+6. Open the file in ConvoMetrics.
 
 ### WhatsApp (Mobile)
 1. Open WhatsApp on your phone and open the chat you wish to analyze.
 2. Tap the contact or group name at the top.
 3. Scroll down and tap **Export Chat**.
 4. Choose **Without Media** (creates a `.txt` file).
-5. Transfer the `.txt` (or the `.zip` WhatsApp may give you) to your computer and upload it to ConvoMetrics.
+5. Open the `.txt` or `.zip` in ConvoMetrics on your device.
 
 ---
 
 ## Tech Stack
-- **Backend:** FastAPI, Pandas, NLTK, Emoji, Uvicorn
+- **Browser analysis:** Pyodide, pandas, Emoji, and the English stopword list from the NLTK stopwords corpus
 - **Frontend:** React 18, Vite, Tailwind CSS, Recharts
-- **Deployment:** Vercel frontend + Render Docker backend; optional all-in-one Docker image
+- **Deployment:** Static hosting or Nginx in Docker
 
 ---
 

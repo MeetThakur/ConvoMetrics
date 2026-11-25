@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChatAnalytics } from './types';
-import { Progress, RangeParams, analyzeFile, checkFile, fetchSample } from './lib/api';
+import { Progress, RangeParams, analyzeLocally, checkFile, releaseAnalysisWorker } from './lib/localAnalysis';
 import { NamesProvider, useNames } from './lib/names';
 import { Reveal, useActiveSection } from './lib/motion';
 import { formatDate, formatSpan } from './lib/format';
@@ -109,22 +109,36 @@ export const App: React.FC = () => {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const activeAnalysis = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    activeAnalysis.current?.abort();
+    releaseAnalysisWorker();
+  }, []);
 
   const run = async (src: Source, range: RangeParams) => {
+    if (activeAnalysis.current) return;
+    const controller = new AbortController();
+    activeAnalysis.current = controller;
     setIsLoading(true);
     setError(null);
-    setProgress(null);
     try {
-      const result =
-        src.kind === 'file' ? await analyzeFile(src.file, range, setProgress) : await fetchSample(range, setProgress);
+      const file = src.kind === 'file' ? src.file : null;
+      const result = await analyzeLocally({ file, range }, setProgress, controller.signal);
+      if (controller.signal.aborted) return;
       setData(result);
       setSource(src);
       if (!data) window.scrollTo({ top: 0 });
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong.');
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        setError(err instanceof Error ? err.message : 'Something went wrong.');
+      }
     } finally {
-      setIsLoading(false);
-      setProgress(null);
+      if (activeAnalysis.current === controller) {
+        activeAnalysis.current = null;
+        setIsLoading(false);
+        setProgress(null);
+      }
     }
   };
 
@@ -148,6 +162,11 @@ export const App: React.FC = () => {
   };
 
   const handleReset = () => {
+    activeAnalysis.current?.abort();
+    activeAnalysis.current = null;
+    releaseAnalysisWorker();
+    setIsLoading(false);
+    setProgress(null);
     setData(null);
     setSource(null);
     setError(null);
@@ -244,7 +263,7 @@ export const App: React.FC = () => {
 
         <footer className="border-t border-rule py-6 px-5 sm:px-8 text-sm text-muted">
           <div className="max-w-5xl mx-auto flex flex-wrap justify-between gap-x-6 gap-y-2">
-            <span>Files are processed in memory and never written to disk.</span>
+            <span>Chat analysis runs on your device. Your files stay in your browser.</span>
             <span>
               <a
                 href="https://github.com/MeetThakur/ConvoMetrics"

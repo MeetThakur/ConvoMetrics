@@ -2,9 +2,9 @@ from collections import Counter
 import string
 from typing import Any, Dict, List
 import pandas as pd
-from backend.insights import compute_insights
-from backend.parsers import COMBINED_STOPWORDS
-from backend.signals import balance_score
+from .insights import compute_insights
+from .parsers import COMBINED_STOPWORDS
+from .signals import balance_score
 
 
 _PUNCT = str.maketrans("", "", string.punctuation)
